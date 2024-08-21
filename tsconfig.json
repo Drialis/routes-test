@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "target": "es2017", // Define la versión de ECMAScript a la que se compila el código
+        "module": "commonjs", // Define el sistema de módulos a usar
+        "emitDecoratorMetadata": true, // Habilita la generación de metadatos de decoradores
+        "experimentalDecorators": true, // Habilita el uso de decoradores experimentales
+        "moduleResolution": "node", // Configura la resolución de módulos para ser compatible con Node.js
+        "strict": true, // Habilita todas las verificaciones de tipo estrictas
+        "skipLibCheck": true, // Omite la comprobación de tipo en archivos de declaración
+        "forceConsistentCasingInFileNames": true // Asegura que los nombres de archivo sean consistentes en mayúsculas y minúsculas
+    },
+    "include": [
+        "src/**/*" // Incluye todos los archivos TypeScript en el directorio `src`
+    ],
+    "exclude": [
+        "node_modules" // Excluye el directorio `node_modules` de la compilación
+    ]
+}
