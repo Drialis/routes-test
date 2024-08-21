@@ -9,6 +9,7 @@ export class RoutesController {
     async getRoute(
         @Query('startLat') startLat: string,
         @Query('startLng') startLng: string,
+
         @Query('endLat') endLat: string,
         @Query('endLng') endLng: string,
     ): Promise<{ polyline: string }> {
