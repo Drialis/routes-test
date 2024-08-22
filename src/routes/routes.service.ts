@@ -5,16 +5,31 @@ import { decodePolyline } from './polyline.utils';
 
 dotenv.config();
 
+interface PolylineResponse {
+    polyline: string,
+    coordinates: [number, number][],
+    waypoint: [number, number]
+}
+
+interface PolylinePayload {
+    startLat: string,
+    startLng: string,
+    endLat: string,
+    endLng: string,
+    waypointLat?: string,
+    waypointLng?: string,
+}
+
 @Injectable()
 export class RoutesService {
     async getPolyline(
-        startLat: string,
-        startLng: string,
-        endLat: string,
-        endLng: string,
-        waypointLat?: string,
-        waypointLng?: string,
-    ): Promise<string> {
+        { startLat,
+            startLng,
+            endLat,
+            endLng,
+            waypointLat,
+            waypointLng }: PolylinePayload
+    ): Promise<PolylineResponse> {
         const apiKey = process.env.GRAPH_HOPPER_API_KEY;
         let url = `https://graphhopper.com/api/1/route?point=${startLat},${startLng}&point=${endLat},${endLng}&vehicle=car&locale=es&key=${apiKey}`;
 
@@ -36,12 +51,13 @@ export class RoutesService {
                 ? [parseFloat(waypointLat), parseFloat(waypointLng)]
                 : null;
 
-            const simplifiedPolyline = decodedPolyline.map(point => point);
+            //const simplifiedPolyline = decodedPolyline.map(point => point);
 
-            return JSON.stringify({
-                polyline: simplifiedPolyline,
+            return {
+                polyline: encodedPolyline,
+                coordinates: decodedPolyline,
                 waypoint: waypoint,
-            });
+            };
 
         } catch (error) {
             console.error('Error al obtener la ruta:', error);
