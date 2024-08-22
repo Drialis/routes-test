@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
-import { decodePolyline } from './polyline.utils';
+import { decodePolyline, simplifyPolyline } from './polyline.utils';
 
 dotenv.config();
 
@@ -51,16 +51,18 @@ export class RoutesService {
                 ? [parseFloat(waypointLat), parseFloat(waypointLng)]
                 : null;
 
-            //const simplifiedPolyline = decodedPolyline.map(point => point);
+            // const simplifiedPolyline = simplifyPolyline(decodedPolyline, 2);
+            // const simplifiedCoordinates = decodePolyline(simplifiedPolyline);
 
             return {
                 polyline: encodedPolyline,
                 coordinates: decodedPolyline,
+                //coordinates: simplifiedCoordinates,
                 waypoint: waypoint,
             };
 
         } catch (error) {
-            console.error('Error al obtener la ruta:', error);
+            console.log('Error al obtener la ruta:', error);
             throw new Error('No se pudo obtener la ruta');
         }
     }
