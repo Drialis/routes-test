@@ -32,12 +32,11 @@ export class RoutesService {
             const encodedPolyline = data.paths[0].points;
             const decodedPolyline = decodePolyline(encodedPolyline);
 
-            const waypoint = waypointLat && waypointLng ? [parseFloat(waypointLat), parseFloat(waypointLng)] : null;
-            const highlightedPolyline = decodedPolyline.map((point) => {
-                return waypoint && point[0] === waypoint[0] && point[1] === waypoint[1] ? point : point;
-            });
+            const waypoint: [number, number] | null = waypointLat && waypointLng
+                ? [parseFloat(waypointLat), parseFloat(waypointLng)]
+                : null;
 
-            const simplifiedPolyline = highlightedPolyline.map(point => point);
+            const simplifiedPolyline = decodedPolyline.map(point => point);
 
             return JSON.stringify({
                 polyline: simplifiedPolyline,
