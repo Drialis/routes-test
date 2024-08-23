@@ -30,11 +30,11 @@ export class RoutesService {
     ): Promise<PolylineResponse> {
         const apiKey = process.env.GRAPH_HOPPER_API_KEY;
         let url = `https://graphhopper.com/api/1/route?point=${startLat},${startLng}&vehicle=car&locale=es&key=${apiKey}`;
-
-        waypoints.forEach(waypoint => {
-            url += `&point=${waypoint.lat},${waypoint.lng}`;
-        });
-
+        if (waypoints.length > 0) {
+            waypoints.forEach(waypoint => {
+                url += `&point=${waypoint.lat},${waypoint.lng}`;
+            });
+        }
         url += `&point=${endLat},${endLng}`
 
         console.log('Request URL:', url);
@@ -46,12 +46,10 @@ export class RoutesService {
             console.log('Response Data:', data);
 
             const encodedPolyline = data.paths[0].points;
-            const decodedPolyline = decodePolyline(encodedPolyline);
-
-            const waypointCoordinates = waypoints.map(wp => [parseFloat(wp.lat), parseFloat(wp.lng)] as [number, number]);
 
             const cleanedPolyline = logPolyline(encodedPolyline);
-
+            const decodedPolyline = decodePolyline(encodedPolyline);
+            const waypointCoordinates = waypoints.map(wp => [parseFloat(wp.lat), parseFloat(wp.lng)] as [number, number]);
             const finalResponse: PolylineResponse = {
                 polyline: cleanedPolyline,
                 coordinates: decodedPolyline,
