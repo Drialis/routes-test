@@ -22,3 +22,16 @@ export const simplifyPolyline = (
     });
     return encodePolyline(simplified);
 };
+
+export const logPolyline = (polyline: string): string => {
+    let without_escapes = ''
+    polyline.split('').forEach((char, i) => {
+        if (char === '\\' && polyline[i + 1] === '\\') {
+            return
+        }
+        without_escapes += char
+
+    })
+    console.log(without_escapes)
+    return without_escapes
+}

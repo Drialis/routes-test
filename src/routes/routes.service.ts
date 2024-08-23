@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
-import { decodePolyline, simplifyPolyline } from './polyline.utils';
+import { decodePolyline, logPolyline, simplifyPolyline } from './polyline.utils';
 
 dotenv.config();
 
@@ -51,11 +51,12 @@ export class RoutesService {
                 ? [parseFloat(waypointLat), parseFloat(waypointLng)]
                 : null;
 
+            const cleanedPolyline = logPolyline(encodedPolyline)
             // const simplifiedPolyline = simplifyPolyline(decodedPolyline, 2);
             // const simplifiedCoordinates = decodePolyline(simplifiedPolyline);
 
             return {
-                polyline: encodedPolyline,
+                polyline: cleanedPolyline,
                 coordinates: decodedPolyline,
                 //coordinates: simplifiedCoordinates,
                 waypoint: waypoint,

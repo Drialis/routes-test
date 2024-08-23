@@ -6,6 +6,8 @@ import { Response } from 'express';
 export class RoutesController {
     constructor(private readonly routesService: RoutesService) { }
 
+
+    //TODO: pasar a método post
     @Get()
     async getRoute(
         @Res() res: Response,
