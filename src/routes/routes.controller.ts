@@ -10,7 +10,7 @@ interface RoutesRequest {
     waypoints?: Waypoint[]
 }
 
-interface Waypoint {
+export interface Waypoint {
     lat: string,
     lng: string
 }
@@ -31,7 +31,7 @@ export class RoutesController {
                 startLng,
                 endLat,
                 endLng,
-                waypoints = []
+                waypoints = [],
             } = body
 
             const polyline = await this.routesService.getPolyline({ startLat, startLng, waypoints, endLat, endLng });

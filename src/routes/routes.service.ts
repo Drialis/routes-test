@@ -2,22 +2,18 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
 import { decodePolyline, logPolyline } from './polyline.utils';
+import { Waypoint } from './routes.controller';
 
 dotenv.config();
 
-// interface PolylineResponse {
-//     polyline: string,
-//     coordinates: [number, number][],
-//     waypoints: [number, number][]
-// }
 
 interface GeoJsonLineString {
     type: "Feature";
     geometry: {
         type: "LineString";
-        coordinates: [number, number][]; // [longitud, latitud]
+        coordinates: [number, number][];
     };
-    properties: Record<string, any>; // Puedes ajustar esto según lo que necesites
+    properties: Record<string, any>;
 }
 
 interface PolylinePayload {
@@ -25,7 +21,7 @@ interface PolylinePayload {
     startLng: string,
     endLat: string,
     endLng: string,
-    waypoints?: { lat: string, lng: string }[]
+    waypoints?: Waypoint[]
 }
 
 @Injectable()
