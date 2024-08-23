@@ -15,13 +15,19 @@ export class RoutesController {
         @Query('startLng') startLng: string,
         @Query('endLat') endLat: string,
         @Query('endLng') endLng: string,
-        @Query('waypointLat') waypointLat?: string,
-        @Query('waypointLng') waypointLng?: string,
+        @Query('waypointLat') waypointLat: string[],
+        @Query('waypointLng') waypointLng: string[]
     ): Promise<Response> {
 
         try {
+            // Lógica para la lista de waypoints
+            const waypoints = waypointLat.map((lat, index) => ({
+                lat,
+                lng: waypointLng[index]
+            }));
+
             // Lógica para obtener la polyline entre A y B pasando por C
-            const polyline = await this.routesService.getPolyline({ startLat, startLng, endLat, endLng, waypointLat, waypointLng });
+            const polyline = await this.routesService.getPolyline({ startLat, startLng, endLat, endLng, waypoints });
             return res.status(200).send(polyline);
         } catch (error) {
             console.log('new error in query', error)

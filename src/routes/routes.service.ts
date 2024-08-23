@@ -8,7 +8,7 @@ dotenv.config();
 interface PolylineResponse {
     polyline: string,
     coordinates: [number, number][],
-    waypoint: [number, number]
+    waypoints: [number, number][]
 }
 
 interface PolylinePayload {
@@ -16,8 +16,7 @@ interface PolylinePayload {
     startLng: string,
     endLat: string,
     endLng: string,
-    waypointLat?: string,
-    waypointLng?: string,
+    waypoints?: { lat: string, lng: string }[]
 }
 
 @Injectable()
@@ -27,15 +26,15 @@ export class RoutesService {
             startLng,
             endLat,
             endLng,
-            waypointLat,
-            waypointLng }: PolylinePayload
+            waypoints = [] }: PolylinePayload
     ): Promise<PolylineResponse> {
         const apiKey = process.env.GRAPH_HOPPER_API_KEY;
         let url = `https://graphhopper.com/api/1/route?point=${startLat},${startLng}&point=${endLat},${endLng}&vehicle=car&locale=es&key=${apiKey}`;
 
-        if (waypointLat && waypointLng) {
-            url += `&point=${waypointLat},${waypointLng}`;
-        }
+        waypoints.forEach(waypoint => {
+            url += `&point=${waypoint.lat},${waypoint.lng}`;
+        });
+
         console.log('Request URL:', url);
 
         try {
@@ -47,20 +46,19 @@ export class RoutesService {
             const encodedPolyline = data.paths[0].points;
             const decodedPolyline = decodePolyline(encodedPolyline);
 
-            const waypoint: [number, number] | null = waypointLat && waypointLng
-                ? [parseFloat(waypointLat), parseFloat(waypointLng)]
-                : null;
+            const waypointCoordinates = waypoints.map(wp => [parseFloat(wp.lat), parseFloat(wp.lng)] as [number, number]);
 
-            const cleanedPolyline = logPolyline(encodedPolyline)
-            // const simplifiedPolyline = simplifyPolyline(decodedPolyline, 2);
-            // const simplifiedCoordinates = decodePolyline(simplifiedPolyline);
+            const cleanedPolyline = logPolyline(encodedPolyline);
 
-            return {
+            const finalResponse: PolylineResponse = {
                 polyline: cleanedPolyline,
                 coordinates: decodedPolyline,
-                //coordinates: simplifiedCoordinates,
-                waypoint: waypoint,
+                waypoints: waypointCoordinates,
             };
+
+            console.log('Postman Response:', finalResponse);
+
+            return finalResponse;
 
         } catch (error) {
             console.log('Error al obtener la ruta:', error);
