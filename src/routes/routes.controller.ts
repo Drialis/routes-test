@@ -37,7 +37,7 @@ export class RoutesController {
             const polyline = await this.routesService.getPolyline({ startLat, startLng, waypoints, endLat, endLng });
             return res.status(200).send(polyline);
         } catch (error) {
-            console.log('new error in query', error)
+            console.log('new error in body', error)
             return res.status(500).send('controller error')
         }
     }

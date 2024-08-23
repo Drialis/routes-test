@@ -1,14 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
-import { decodePolyline, logPolyline, simplifyPolyline } from './polyline.utils';
+import { decodePolyline, logPolyline } from './polyline.utils';
 
 dotenv.config();
 
-interface PolylineResponse {
-    polyline: string,
-    coordinates: [number, number][],
-    waypoints: [number, number][]
+// interface PolylineResponse {
+//     polyline: string,
+//     coordinates: [number, number][],
+//     waypoints: [number, number][]
+// }
+
+interface GeoJsonLineString {
+    type: "Feature";
+    geometry: {
+        type: "LineString";
+        coordinates: [number, number][]; // [longitud, latitud]
+    };
+    properties: Record<string, any>; // Puedes ajustar esto según lo que necesites
 }
 
 interface PolylinePayload {
@@ -27,7 +36,7 @@ export class RoutesService {
             endLat,
             endLng,
             waypoints = [] }: PolylinePayload
-    ): Promise<PolylineResponse> {
+    ): Promise<GeoJsonLineString> {
         const apiKey = process.env.GRAPH_HOPPER_API_KEY;
         let url = `https://graphhopper.com/api/1/route?point=${startLat},${startLng}&vehicle=car&locale=es&key=${apiKey}`;
         if (waypoints.length > 0) {
@@ -50,10 +59,14 @@ export class RoutesService {
             const cleanedPolyline = logPolyline(encodedPolyline);
             const decodedPolyline = decodePolyline(encodedPolyline);
             const waypointCoordinates = waypoints.map(wp => [parseFloat(wp.lat), parseFloat(wp.lng)] as [number, number]);
-            const finalResponse: PolylineResponse = {
-                polyline: cleanedPolyline,
-                coordinates: decodedPolyline,
-                waypoints: waypointCoordinates,
+
+            const finalResponse: GeoJsonLineString = {
+                type: "Feature",
+                geometry: {
+                    type: "LineString",
+                    coordinates: decodedPolyline.map(coord => [coord[1], coord[0]])
+                },
+                properties: waypointCoordinates,
             };
 
             console.log('Postman Response:', finalResponse);
@@ -66,3 +79,4 @@ export class RoutesService {
         }
     }
 }
+
