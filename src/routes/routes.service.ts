@@ -29,11 +29,13 @@ export class RoutesService {
             waypoints = [] }: PolylinePayload
     ): Promise<PolylineResponse> {
         const apiKey = process.env.GRAPH_HOPPER_API_KEY;
-        let url = `https://graphhopper.com/api/1/route?point=${startLat},${startLng}&point=${endLat},${endLng}&vehicle=car&locale=es&key=${apiKey}`;
+        let url = `https://graphhopper.com/api/1/route?point=${startLat},${startLng}&vehicle=car&locale=es&key=${apiKey}`;
 
         waypoints.forEach(waypoint => {
             url += `&point=${waypoint.lat},${waypoint.lng}`;
         });
+
+        url += `&point=${endLat},${endLng}`
 
         console.log('Request URL:', url);
 

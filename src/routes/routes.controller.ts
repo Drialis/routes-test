@@ -15,15 +15,24 @@ export class RoutesController {
         @Query('startLng') startLng: string,
         @Query('endLat') endLat: string,
         @Query('endLng') endLng: string,
-        @Query('waypointLat') waypointLat: string[],
-        @Query('waypointLng') waypointLng: string[]
+        @Query('waypointLat') waypointLat: string | string[],
+        @Query('waypointLng') waypointLng: string | string[]
     ): Promise<Response> {
 
         try {
+
+            const latArray = Array.isArray(waypointLat) ? waypointLat : [waypointLat];
+            const lngArray = Array.isArray(waypointLng) ? waypointLng : [waypointLng];
             // Lógica para la lista de waypoints
-            const waypoints = waypointLat.map((lat, index) => ({
+            // Asegurarse de que latArray y lngArray tengan el mismo tamaño
+            if (latArray.length !== lngArray.length) {
+                throw new Error('Los arrays waypointLat y waypointLng deben tener la misma longitud.');
+            }
+
+            // Crear el array de waypoints
+            const waypoints = latArray.map((lat, index) => ({
                 lat,
-                lng: waypointLng[index]
+                lng: lngArray[index]
             }));
 
             // Lógica para obtener la polyline entre A y B pasando por C
