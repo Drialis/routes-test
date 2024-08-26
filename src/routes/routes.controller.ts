@@ -33,8 +33,11 @@ export class RoutesController {
                 waypoints = []
             } = body;
 
-            const polyline = await this.routesService.getPolyline({ startLat, startLng, waypoints, endLat, endLng });
-            return res.status(200).send(polyline);
+            const polylineResponse = await this.routesService.getPolyline({ startLat, startLng, waypoints, endLat, endLng });
+            if (!polylineResponse?.ok) {
+                return res.status(400).send(polylineResponse?.error)
+            }
+            return res.status(200).send(polylineResponse.data)
         } catch (error) {
             console.log('new error in body', error);
             return res.status(500).send('controller error');
