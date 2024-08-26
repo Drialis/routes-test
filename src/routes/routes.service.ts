@@ -2,13 +2,16 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
 import { decodePolyline, logPolyline } from './polyline.utils';
-import { RoutesRequest, Waypoint } from './routes.controller';
+import { RoutesRequest } from './routes.controller';
 import { ParsedResponse, completePoint } from './routes.types';
+import { CountryService } from './country.service';
 
 dotenv.config();
 
 @Injectable()
 export class RoutesService {
+    constructor(private readonly countryService: CountryService) { }
+
     async getPolyline(
         { startLat, startLng, endLat, endLng, waypoints = [] }: RoutesRequest
     ): Promise<ParsedResponse> {
@@ -21,7 +24,7 @@ export class RoutesService {
                 [parseFloat(endLng), parseFloat(endLat)]
             ],
             profile: 'car',
-            details: ['max_speed', 'toll'],
+            details: ['max_speed', 'toll', 'country'],
             instructions: true,
             calc_points: true
         };
@@ -40,17 +43,20 @@ export class RoutesService {
 
             const speedDetails = data.paths[0].details?.max_speed || [];
             const tollDetails = data.paths[0].details?.toll || [];
+            const countryDetails = data.paths[0].details?.country || [];
 
             const completeInfo: completePoint[] = decodedPolyline.map((coord: [number, number], index: number) => {
-                const speed = speedDetails;
+                const speed = speedDetails[index] || 0;
                 const toll = tollDetails[index] || null;
+                const country = countryDetails[index] || '';
+
                 return {
-                    latitude: coord[1], //formato Geojson
+                    latitude: coord[1], // formato Geojson
                     longitude: coord[0],
                     max_speed: speed,
-                    avg_speed: 0, // TODO: Default 0 hasta ver de dónde sacamos el dato
+                    avg_speed: 0, // TODO: Default 0 hasta ver de dónde sacar el dato
                     toll: toll,
-                    country: "" // TODO: Pasar a formato IBAN
+                    country: this.countryService.getIso2FromIso3(country)
                 };
             });
 

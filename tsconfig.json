@@ -8,7 +8,9 @@
         "experimentalDecorators": true,
         "target": "es2017",
         "moduleResolution": "node",
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "esModuleInterop": true
     },
     "exclude": [
         "node_modules",
