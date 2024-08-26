@@ -14,7 +14,7 @@ export interface ParsedResponse {
 export interface completePoint {
     latitude: number;
     longitude: number;
-    max_speed: number;
+    max_speed: number[];
     avg_speed: number;
     toll: boolean;
     country: string;

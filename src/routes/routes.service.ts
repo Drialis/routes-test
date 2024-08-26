@@ -19,9 +19,9 @@ export class RoutesService {
 
         const requestPayload = {
             points: [
-                [parseFloat(startLng), parseFloat(startLat)],
-                ...waypoints.map(wp => [parseFloat(wp.lng), parseFloat(wp.lat)]),
-                [parseFloat(endLng), parseFloat(endLat)]
+                [parseFloat(startLng), parseFloat(startLat)] as [number, number],
+                ...waypoints.map(wp => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number]),
+                [parseFloat(endLng), parseFloat(endLat)] as [number, number]
             ],
             profile: 'car',
             details: ['max_speed', 'toll', 'country'],
@@ -30,7 +30,7 @@ export class RoutesService {
         };
 
         if (!validateRequestPayload(requestPayload)) {
-            throw new Error('Invalid coordinates in payload');
+            throw new Error('Invalid payload');
         }
 
         console.log('Request Payload:', requestPayload);
@@ -61,15 +61,15 @@ export class RoutesService {
             const countryDetails = data.paths[0].details?.country || [];
 
             const completeInfo: completePoint[] = decodedPolyline.map((coord: [number, number], index: number) => {
-                const speed = speedDetails[index] || 0;
-                const toll = tollDetails[index] || null;
+                const speed = speedDetails[index] !== undefined ? speedDetails[index] : null;
+                const toll = tollDetails[index] !== undefined ? tollDetails[index] : null;
                 const country = countryDetails[index] || '';
 
                 return {
-                    latitude: coord[1], // formato Geojson
+                    latitude: coord[1],                                 // formato Geojson
                     longitude: coord[0],
-                    max_speed: speed,
-                    avg_speed: 0, // TODO: Default 0 hasta ver de dónde sacar el dato
+                    max_speed: Array.isArray(speed) ? speed : [speed],  // Si es un array, lo usa; si no, lo embebe en un array
+                    avg_speed: 0,                                       // TODO: Default 0 hasta ver de dónde sacar el dato
                     toll: toll,
                     country: this.countryService.getIso2FromIso3(country)
                 };
@@ -97,9 +97,10 @@ export class RoutesService {
 
             return finalResponse;
 
+
         } catch (error) {
             console.log('Error getting the route:', error);
-            if (error.message.includes('Invalid coordinates')) {
+            if (error.message.includes('Invalid payload')) {
                 throw new Error('Invalid payload');
             }
             throw new Error('The route could not be obtained');
