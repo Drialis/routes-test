@@ -1,19 +1,9 @@
 import { Body, Controller, Post, Res } from '@nestjs/common';
-import { RoutesService } from './routes.service';
 import { Response } from 'express';
+import { RoutesService } from './routes.service';
+import { RoutesRequest } from './routes.types';
 
-export interface RoutesRequest {
-    startLat: string,
-    startLng: string,
-    endLat: string,
-    endLng: string,
-    waypoints?: Waypoint[]
-}
 
-export interface Waypoint {
-    lat: string,
-    lng: string
-}
 
 @Controller('routes')
 export class RoutesController {
