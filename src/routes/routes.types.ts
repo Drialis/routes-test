@@ -6,7 +6,8 @@ export interface ParsedResponse {
     elevation: {
         ascend: number;
         descend: number;
-    }
+    },
+    waypoints: [number, number][];
     complete_info: completePoint[];
 }
 
