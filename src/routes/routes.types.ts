@@ -19,3 +19,22 @@ export interface completePoint {
     toll: boolean;
     country: string;
 }
+
+export interface GraphhopperResponse {
+    paths: Path[];
+}
+
+export interface Path {
+    distance: number;
+    time: number;
+    points: string;
+    details?: PathDetails;
+    ascend?: number;
+    descend?: number;
+}
+
+export interface PathDetails {
+    max_speed: number[];
+    toll: boolean[];
+    country: string[];
+}

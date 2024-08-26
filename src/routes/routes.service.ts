@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
 import * as dotenv from 'dotenv';
 import { decodePolyline, logPolyline } from './polyline.utils';
 import { RoutesRequest } from './routes.controller';
-import { ParsedResponse, completePoint } from './routes.types';
+import { ParsedResponse, completePoint, GraphhopperResponse } from './routes.types';
 import { CountryService } from './country.service';
+import { validateRequestPayload } from '../routes/validation.utils';
 
 dotenv.config();
 
@@ -29,11 +29,26 @@ export class RoutesService {
             calc_points: true
         };
 
+        if (!validateRequestPayload(requestPayload)) {
+            throw new Error('Invalid coordinates in payload');
+        }
+
         console.log('Request Payload:', requestPayload);
 
         try {
-            const response = await axios.post(`https://graphhopper.com/api/1/route?key=${apiKey}`, requestPayload);
-            const data = response.data;
+            const response = await fetch(`https://graphhopper.com/api/1/route?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestPayload),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data: GraphhopperResponse = await response.json();
 
             console.log('Response Data:', data);
 
@@ -83,8 +98,11 @@ export class RoutesService {
             return finalResponse;
 
         } catch (error) {
-            console.log('Error al obtener la ruta:', error);
-            throw new Error('No se pudo obtener la ruta');
+            console.log('Error getting the route:', error);
+            if (error.message.includes('Invalid coordinates')) {
+                throw new Error('Invalid payload');
+            }
+            throw new Error('The route could not be obtained');
         }
     }
 }
