@@ -2,7 +2,7 @@ import { Body, Controller, Post, Res } from '@nestjs/common';
 import { RoutesService } from './routes.service';
 import { Response } from 'express';
 
-interface RoutesRequest {
+export interface RoutesRequest {
     startLat: string,
     startLng: string,
     endLat: string,
@@ -24,21 +24,20 @@ export class RoutesController {
         @Res() res: Response,
         @Body() body: RoutesRequest
     ): Promise<Response> {
-
         try {
             const {
                 startLat,
                 startLng,
                 endLat,
                 endLng,
-                waypoints = [],
-            } = body
+                waypoints = []
+            } = body;
 
             const polyline = await this.routesService.getPolyline({ startLat, startLng, waypoints, endLat, endLng });
             return res.status(200).send(polyline);
         } catch (error) {
-            console.log('new error in body', error)
-            return res.status(500).send('controller error')
+            console.log('new error in body', error);
+            return res.status(500).send('controller error');
         }
     }
 }
