@@ -1,41 +1,16 @@
 import { europeCountriesISO } from '../assets/europeCountriesISO';
-import { decodePolyline, logPolyline } from './polyline.utils';
-import { completePoint, ParsedRoute, Path, Waypoint } from './routes.types';
+import { decodePolyline, logPolyline, simplifyPolyline } from './polyline.utils';
+import { generateRoutesDetails } from './routes.details.util';
+import { ParsedRoute, Path, Waypoint } from './routes.types';
 
 export const parsedRoutes = (
   path: Path,
   waypoints: Waypoint[],
 ): ParsedRoute => {
   const encodedPolyline = path.points;
-  const cleanedPolyline = logPolyline(encodedPolyline);
   const decodedPolyline = decodePolyline(encodedPolyline);
-
-  const speedDetails = path.details?.max_speed || [];
-  const tollDetails = path.details?.toll || [];
-  const countryDetails = path.details?.country || [];
-
-  const completeInfo: completePoint[] = decodedPolyline.map(
-    (coord: [number, number], index: number) => {
-      const actualSpeedDetail = speedDetails[0];
-      const actualTollDetail = tollDetails[0];
-      const actualCountryDetail = countryDetails[0];
-      if (index + 1 > actualSpeedDetail?.[1]) speedDetails?.shift();
-      if (index + 1 > actualCountryDetail?.[1]) tollDetails?.shift();
-      if (index + 1 > actualTollDetail?.[1]) countryDetails?.shift();
-
-      const speed = actualSpeedDetail?.[2] || null;
-      const toll = actualTollDetail?.[2] === 'yes';
-      const country = actualCountryDetail?.[2];
-
-      return {
-        latitude: coord[1], // formato Geojson
-        longitude: coord[0],
-        max_speed: speed, // TODO: Default 0 hasta ver de dónde sacar el dato
-        toll: toll,
-        country: europeCountriesISO[country],
-      };
-    },
-  );
+  const simplifiedPolyline = simplifyPolyline(decodedPolyline, 5)
+  const cleanedPolyline = logPolyline(simplifiedPolyline);
 
   const waypointCoordinates = waypoints.map(
     (wp) => [parseFloat(wp.lat), parseFloat(wp.lng)] as [number, number],
@@ -55,7 +30,7 @@ export const parsedRoutes = (
       descend: path.descend || 0,
     },
     waypoints: waypointCoordinates,
-    complete_info: completeInfo,
+  //  complete_info: generateRoutesDetails(path, europeCountriesISO, decodedPolyline),  //descomentar también de parsedRoute
   };
 
   return finalResponse;

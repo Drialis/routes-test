@@ -23,6 +23,19 @@ export const simplifyPolyline = (
     return encodePolyline(simplified);
 };
 
+export const simplifyPolylineArray = (
+  coordinates: [number, number][],
+  precision: number,
+): [number, number][] => {
+  const simplified: [number, number][] = [];
+  coordinates.forEach((pair, i) => {
+    if (i % precision === 0) {
+      simplified.push(pair);
+    }
+  });
+  return simplified;  
+}
+
 export const logPolyline = (polyline: string): string => {
     let without_escapes = ''
     polyline.split('').forEach((char, i) => {

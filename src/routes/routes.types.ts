@@ -9,7 +9,7 @@ export interface ParsedRoute {
     descend: number;
   };
   waypoints: [number, number][];
-  complete_info: completePoint[];
+  //complete_info: completePoint[];
 }
 
 export interface ParsedResponse {
