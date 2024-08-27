@@ -8,7 +8,7 @@ import {
   ParsedResponse,
   RoutesRequest,
 } from "./routes.types";
-import { handleErrorResponse, parsedRoutes } from "./routes.utils";
+import { expandBBox, handleErrorResponse, parsedRoutes } from "./routes.utils";
 
 dotenv.config();
 
@@ -22,6 +22,7 @@ export class RoutesService {
     endLat,
     endLng,
     waypoints = [],
+    distance_to_charger = 1000
   }: RoutesRequest): Promise<IResponse<ParsedResponse>> {
     const apiKey = process.env.GRAPH_HOPPER_API_KEY;
 
@@ -75,6 +76,10 @@ export class RoutesService {
       if (response.status !== 200) return handleErrorResponse(response);
 
       if (!data?.paths?.length) return { ok: false, error: "No routes found" };
+
+          data.paths.forEach(path => {
+      path.bbox = expandBBox(path.bbox, distance_to_charger);
+    });
 
       return {
         ok: true,
