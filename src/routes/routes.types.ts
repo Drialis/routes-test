@@ -2,9 +2,7 @@ export interface ParsedRoute {
   distance: number;
   time: number;
   bbox: [number, number, number, number];
-  geojson: { 
-    type: 'LineString'; 
-    coordinates: [number, number][] };
+  geojson: GeoJsonLineString;
   polyline: string;
   elevation: {
     ascend: number;
@@ -88,3 +86,8 @@ export interface Waypoint {
     lat: string,
     lng: string
 }
+
+export interface GeoJsonLineString {
+  type: 'LineString';
+  coordinates: [number, number][];
+};

@@ -2,37 +2,32 @@ import { europeCountriesISO } from '../assets/europeCountriesISO';
 import { mockedPOIs } from '../assets/mockedPOIs';
 import { decodePolyline, logPolyline, simplifyPolyline } from './polyline.utils';
 import { generateRoutesDetails } from './routes.details.util';
-import { IResponse, ParsedResponse, ParsedRoute, Path, Waypoint } from './routes.types';
+import { GeoJsonLineString, IResponse, ParsedResponse, ParsedRoute, Path, Waypoint } from './routes.types';
 import * as turf from '@turf/turf'
 
 export const parsedRoutes = (
   path: Path,
   waypoints: Waypoint[],
-  //añadido para mockear los cargadores
   distanceToPOI: number = 1000
 ): ParsedRoute => {
   const encodedPolyline = path.points;
   const decodedPolyline = decodePolyline(encodedPolyline);
-  const simplifiedPolyline = simplifyPolyline(decodedPolyline, 17)
-  const cleanedPolyline = logPolyline(simplifiedPolyline);
+ // const simplifiedPolyline = simplifyPolyline(decodedPolyline, 17)
+  const cleanedPolyline = logPolyline(encodedPolyline);
 
-  const originalGeoJSON: { type: 'LineString'; coordinates: [number, number][] } = {
+  const originalGeoJSON: GeoJsonLineString = {
     type: 'LineString',
     coordinates: decodedPolyline.map(coord => [coord[1], coord[0]]) as [number, number][],
   };
   const simplifiedGeoJSON = simplifyGeoJSONLineString(originalGeoJSON, 0.01);
-
   // Ampliar el bbox
   let bbox = path.bbox;
   bbox = expandBBox(bbox, distanceToPOI);
-
-  // Obtener cargadores dentro del bbox
-  const POIsWithinBBox = getPOIsWithinDistanceFromLine(originalGeoJSON, mockedPOIs, distanceToPOI);
+  // Obtener puntos de interés dentro del bbox
+  const POIsWithinBBox = getPOIsWithinDistanceFromLine(simplifiedGeoJSON, mockedPOIs, distanceToPOI);
   const waypointCoordinates = waypoints.map(
     (wp) => [parseFloat(wp.lat), parseFloat(wp.lng)] as [number, number],
   );
-
-
 
   const finalResponse: ParsedRoute = {
     distance: path.distance || 0,
@@ -69,10 +64,9 @@ export const handleErrorResponse = (response: Response): IResponse<ParsedRespons
 }
 
 export const simplifyGeoJSONLineString = (
-  geojsonLineString: { type: 'LineString'; coordinates: [number, number][] },
+  geojsonLineString: GeoJsonLineString,
   tolerance: number
-): ParsedRoute['geojson'] => {
-
+): GeoJsonLineString => {
   const lineString = turf.lineString(geojsonLineString.coordinates);
   const simplified = turf.simplify(lineString, { tolerance });
 
@@ -91,19 +85,8 @@ export const expandBBox = (bbox: [number, number, number, number], distance: num
   return expandedBBox as [number, number, number, number];
 }
 
-// Verifica si hay un cargador dentro de la bbox
-// const isWithinBBox =(lat: number, lng: number, bbox: number[]): boolean => {
-//     const [minLng, minLat, maxLng, maxLat] = bbox;
-//     return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
-// }
-
-// Mock de función para "consultar" los cargadores dentro del bbox
-// const getPOIsWithinBBox = (bbox: number[]): { latitude: number, longitude: number }[] => {
-//     return mockedPOIs.filter(POI => isWithinBBox(POI.latitude, POI.longitude, bbox));
-// }
-
 const getPOIsWithinDistanceFromLine = (
-  route: { type: 'LineString'; coordinates: [number, number][] },
+  route: GeoJsonLineString,
   poIsArray: { latitude: number, longitude: number }[],
   maxDistance: number
 ): { latitude: number, longitude: number }[] => {
@@ -114,3 +97,4 @@ const getPOIsWithinDistanceFromLine = (
     return distanceFromLine <= maxDistance;
   });
 }
+

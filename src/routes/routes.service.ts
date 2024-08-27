@@ -8,7 +8,7 @@ import {
   ParsedResponse,
   RoutesRequest,
 } from "./routes.types";
-import { expandBBox, handleErrorResponse, parsedRoutes } from "./routes.utils";
+import { handleErrorResponse, parsedRoutes } from "./routes.utils";
 
 dotenv.config();
 
@@ -22,7 +22,6 @@ export class RoutesService {
     endLat,
     endLng,
     waypoints = [],
-    distance_to_POI = 1000
   }: RoutesRequest): Promise<IResponse<ParsedResponse>> {
     const apiKey = process.env.GRAPH_HOPPER_API_KEY;
 

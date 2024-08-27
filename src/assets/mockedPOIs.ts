@@ -24,7 +24,7 @@ export const mockedPOIs: { latitude: number; longitude: number }[] = [
   { latitude: 36.526724, longitude: -6.283418 }, // Cádiz
   { latitude: 41.652946, longitude: -4.728563 }, // Valladolid
   { latitude: 41.656063, longitude: -3.690346 }, // Segovia
-    { latitude: 42.131836, longitude: -0.408607 }, // Huesca
+  { latitude: 42.131836, longitude: -0.408607 }, // Huesca
   { latitude: 43.366807, longitude: -8.411541 }, // A Coruña
   { latitude: 39.075530, longitude: -8.146217 }, // Alcázar de San Juan
   { latitude: 38.949447, longitude: -1.858728 }, // Albacete
