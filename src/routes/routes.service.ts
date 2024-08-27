@@ -77,10 +77,6 @@ export class RoutesService {
 
       if (!data?.paths?.length) return { ok: false, error: "No routes found" };
 
-          data.paths.forEach(path => {
-      path.bbox = expandBBox(path.bbox, distance_to_POI);
-    });
-
       return {
         ok: true,
         data: {

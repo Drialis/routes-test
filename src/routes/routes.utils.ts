@@ -27,7 +27,7 @@ export const parsedRoutes = (
   bbox = expandBBox(bbox, distanceToPOI);
 
   // Obtener cargadores dentro del bbox
-  const POIsWithinBBox = getPOIsWithinBBox(bbox);
+  const POIsWithinBBox = getPOIsWithinDistanceFromLine(originalGeoJSON, mockedPOIs, distanceToPOI);
   const waypointCoordinates = waypoints.map(
     (wp) => [parseFloat(wp.lat), parseFloat(wp.lng)] as [number, number],
   );
@@ -45,7 +45,6 @@ export const parsedRoutes = (
       descend: path.descend || 0,
     },
     waypoints: waypointCoordinates,
-    //nuevo campo para añadir los cargadores
     POIs: POIsWithinBBox
     //  complete_info: generateRoutesDetails(path, europeCountriesISO, decodedPolyline),  //descomentar también de parsedRoute
   };
@@ -92,13 +91,26 @@ export const expandBBox = (bbox: [number, number, number, number], distance: num
   return expandedBBox as [number, number, number, number];
 }
 
-// Función para verificar si un cargador está dentro del bbox
-function isWithinBBox(lat: number, lng: number, bbox: number[]): boolean {
-    const [minLng, minLat, maxLng, maxLat] = bbox;
-    return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
-}
+// Verifica si hay un cargador dentro de la bbox
+// const isWithinBBox =(lat: number, lng: number, bbox: number[]): boolean => {
+//     const [minLng, minLat, maxLng, maxLat] = bbox;
+//     return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
+// }
 
 // Mock de función para "consultar" los cargadores dentro del bbox
-function getPOIsWithinBBox(bbox: number[]): { latitude: number, longitude: number }[] {
-    return mockedPOIs.filter(POI => isWithinBBox(POI.latitude, POI.longitude, bbox));
+// const getPOIsWithinBBox = (bbox: number[]): { latitude: number, longitude: number }[] => {
+//     return mockedPOIs.filter(POI => isWithinBBox(POI.latitude, POI.longitude, bbox));
+// }
+
+const getPOIsWithinDistanceFromLine = (
+  route: { type: 'LineString'; coordinates: [number, number][] },
+  poIsArray: { latitude: number, longitude: number }[],
+  maxDistance: number
+): { latitude: number, longitude: number }[] => {
+  return poIsArray.filter(POI => {
+    const point = turf.point([POI.longitude, POI.latitude]);
+    const lineString = turf.lineString(route.coordinates);
+    const distanceFromLine = turf.pointToLineDistance(point, lineString, { units: 'meters' });
+    return distanceFromLine <= maxDistance;
+  });
 }
