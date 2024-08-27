@@ -1,5 +1,5 @@
 import { europeCountriesISO } from '../assets/europeCountriesISO';
-import { mockChargers } from '../assets/mockedChargers';
+import { mockedPOIs } from '../assets/mockedPOIs';
 import { decodePolyline, logPolyline, simplifyPolyline } from './polyline.utils';
 import { generateRoutesDetails } from './routes.details.util';
 import { IResponse, ParsedResponse, ParsedRoute, Path, Waypoint } from './routes.types';
@@ -9,7 +9,7 @@ export const parsedRoutes = (
   path: Path,
   waypoints: Waypoint[],
   //añadido para mockear los cargadores
-  distanceToCharger: number = 1000
+  distanceToPOI: number = 1000
 ): ParsedRoute => {
   const encodedPolyline = path.points;
   const decodedPolyline = decodePolyline(encodedPolyline);
@@ -24,10 +24,10 @@ export const parsedRoutes = (
 
   // Ampliar el bbox
   let bbox = path.bbox;
-  bbox = expandBBox(bbox, distanceToCharger);
+  bbox = expandBBox(bbox, distanceToPOI);
 
   // Obtener cargadores dentro del bbox
-  const chargersWithinBBox = getChargersWithinBBox(bbox);
+  const POIsWithinBBox = getPOIsWithinBBox(bbox);
   const waypointCoordinates = waypoints.map(
     (wp) => [parseFloat(wp.lat), parseFloat(wp.lng)] as [number, number],
   );
@@ -46,7 +46,7 @@ export const parsedRoutes = (
     },
     waypoints: waypointCoordinates,
     //nuevo campo para añadir los cargadores
-    chargers: chargersWithinBBox
+    POIs: POIsWithinBBox
     //  complete_info: generateRoutesDetails(path, europeCountriesISO, decodedPolyline),  //descomentar también de parsedRoute
   };
 
@@ -99,6 +99,6 @@ function isWithinBBox(lat: number, lng: number, bbox: number[]): boolean {
 }
 
 // Mock de función para "consultar" los cargadores dentro del bbox
-function getChargersWithinBBox(bbox: number[]): { latitude: number, longitude: number }[] {
-    return mockChargers.filter(charger => isWithinBBox(charger.latitude, charger.longitude, bbox));
+function getPOIsWithinBBox(bbox: number[]): { latitude: number, longitude: number }[] {
+    return mockedPOIs.filter(POI => isWithinBBox(POI.latitude, POI.longitude, bbox));
 }

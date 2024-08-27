@@ -22,7 +22,7 @@ export class RoutesService {
     endLat,
     endLng,
     waypoints = [],
-    distance_to_charger = 1000
+    distance_to_POI = 1000
   }: RoutesRequest): Promise<IResponse<ParsedResponse>> {
     const apiKey = process.env.GRAPH_HOPPER_API_KEY;
 
@@ -78,7 +78,7 @@ export class RoutesService {
       if (!data?.paths?.length) return { ok: false, error: "No routes found" };
 
           data.paths.forEach(path => {
-      path.bbox = expandBBox(path.bbox, distance_to_charger);
+      path.bbox = expandBBox(path.bbox, distance_to_POI);
     });
 
       return {

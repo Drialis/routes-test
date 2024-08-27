@@ -1,4 +1,4 @@
-export const mockChargers: { latitude: number; longitude: number }[] = [
+export const mockedPOIs: { latitude: number; longitude: number }[] = [
   { latitude: 40.416775, longitude: -3.703790 }, // Madrid
   { latitude: 41.385064, longitude: 2.173404 },  // Barcelona
   { latitude: 37.774929, longitude: -0.698056 }, // Murcia

@@ -14,7 +14,7 @@ export interface ParsedRoute {
   //complete_info: completePoint[];
 
   //hay que añadir aquí también los cargadores:
-  chargers?: { latitude: number; longitude: number }[]
+  POIs?: { latitude: number; longitude: number }[]
 }
 
 export interface ParsedResponse {
@@ -81,7 +81,7 @@ export interface RoutesRequest {
     endLat: string,
     endLng: string,
     waypoints?: Waypoint[],
-    distance_to_charger?: number;
+    distance_to_POI?: number;
 }
 
 export interface Waypoint {
