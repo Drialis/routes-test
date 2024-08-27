@@ -10,8 +10,6 @@ export interface ParsedRoute {
   };
   waypoints: [number, number][];
   //complete_info: completePoint[];
-
-  //hay que añadir aquí también los cargadores:
   POIs?: { latitude: number; longitude: number }[]
 }
 
@@ -74,17 +72,17 @@ export interface IResponse<T = any> {
 
 
 export interface RoutesRequest {
-    startLat: string,
-    startLng: string,
-    endLat: string,
-    endLng: string,
-    waypoints?: Waypoint[],
-    distance_to_POI?: number;
+  startLat: string,
+  startLng: string,
+  endLat: string,
+  endLng: string,
+  waypoints?: Waypoint[],
+  distance_to_POI?: number;
 }
 
 export interface Waypoint {
-    lat: string,
-    lng: string
+  lat: string,
+  lng: string
 }
 
 export interface GeoJsonLineString {
