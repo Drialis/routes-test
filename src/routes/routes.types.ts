@@ -1,9 +1,11 @@
 export interface ParsedRoute {
   distance: number;
   time: number;
-  geojson: { type: 'LineString'; coordinates: [number, number][] };
-  polyline: string;
   bbox: [number, number, number, number];
+  geojson: { 
+    type: 'LineString'; 
+    coordinates: [number, number][] };
+  polyline: string;
   elevation: {
     ascend: number;
     descend: number;

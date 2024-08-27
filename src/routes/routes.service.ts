@@ -1,9 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import * as dotenv from 'dotenv';
-import { writeFileSync } from 'fs';
-import { validateRequestPayload } from '../routes/validation.utils';
-import { ErrorResponse, GraphhopperResponse, IResponse, ParsedResponse, RoutesRequest } from './routes.types';
-import { handleErrorResponse, parsedRoutes } from './routes.utils';
+import { Injectable } from "@nestjs/common";
+import * as dotenv from "dotenv";
+import { writeFileSync } from "fs";
+import { validateRequestPayload } from "../routes/validation.utils";
+import {
+  GraphhopperResponse,
+  IResponse,
+  ParsedResponse,
+  RoutesRequest,
+} from "./routes.types";
+import { handleErrorResponse, parsedRoutes } from "./routes.utils";
 
 dotenv.config();
 
@@ -24,32 +29,39 @@ export class RoutesService {
       points: [
         [parseFloat(startLng), parseFloat(startLat)] as [number, number],
         ...waypoints.map(
-          (wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number],
+          (wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number]
         ),
         [parseFloat(endLng), parseFloat(endLat)] as [number, number],
       ],
-      profile: 'car',
-      details: ['max_speed', 'toll', 'country'],
+      profile: "car",
+      details: ["max_speed", "toll", "country"],
       instructions: false,
       calc_points: true,
     };
 
+    //TODO
+    /* if (requestPayload.points.length <= 2){
+      
+      requestPayload["alternative_route.max_paths"]= 2
+      requestPayload['algorithm'] = "alternative_route"
+    } */
+
     if (!validateRequestPayload(requestPayload)) {
-      return { ok: false, error: 'Invalid payload' };
+      return { ok: false, error: "Invalid payload" };
     }
 
-    console.log('Request Payload:', requestPayload);
+    console.log("Request Payload:", requestPayload);
 
     try {
       const response = await fetch(
         `https://graphhopper.com/api/1/route?key=${apiKey}`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(requestPayload),
-        },
+        }
       );
 
       console.log(response.status, response.statusText);
@@ -58,24 +70,20 @@ export class RoutesService {
         .json()
         .catch(console.error);
 
-      writeFileSync('response.json', JSON.stringify(data));
+      writeFileSync("response.json", JSON.stringify(data));
 
-if (response.ok) {
-        if (data && data.paths && data.paths.length) {
-          return {
-            ok: true,
-            data: {
-              routes: data.paths.map((path) => parsedRoutes(path, waypoints)),
-            },
-          };
-        } else {
-          return { ok: false, error: 'No routes found' };
-        }
-      } else {
-        return handleErrorResponse(response); 
-      }
+      if (response.status !== 200) return handleErrorResponse(response);
+
+      if (!data?.paths?.length) return { ok: false, error: "No routes found" };
+
+      return {
+        ok: true,
+        data: {
+          routes: data.paths.map((path) => parsedRoutes(path, waypoints)),
+        },
+      };
     } catch (error) {
-      console.log('Error getting the route:', error);
+      console.log("Error getting the route:", error);
       return { ok: false };
     }
   }
