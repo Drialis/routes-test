@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import { writeFileSync } from 'fs';
 import { validateRequestPayload } from '../routes/validation.utils';
-import { GraphhopperResponse, IResponse, ParsedResponse, RoutesRequest } from './routes.types';
-import { parsedRoutes } from './routes.utils';
+import { ErrorResponse, GraphhopperResponse, IResponse, ParsedResponse, RoutesRequest } from './routes.types';
+import { handleErrorResponse, parsedRoutes } from './routes.utils';
 
 dotenv.config();
 
@@ -57,19 +57,23 @@ export class RoutesService {
       const data: GraphhopperResponse | null = await response
         .json()
         .catch(console.error);
+
       writeFileSync('response.json', JSON.stringify(data));
-      if (response.status !== 200 || !data?.paths?.length) {
-        return { ok: false };
 
-        //TODO: handle error con las opciones de graph hopper
+if (response.ok) {
+        if (data && data.paths && data.paths.length) {
+          return {
+            ok: true,
+            data: {
+              routes: data.paths.map((path) => parsedRoutes(path, waypoints)),
+            },
+          };
+        } else {
+          return { ok: false, error: 'No routes found' };
+        }
+      } else {
+        return handleErrorResponse(response); 
       }
-
-      return {
-        ok: true,
-        data: {
-          routes: data.paths.map((path) => parsedRoutes(path, waypoints)),
-        },
-      };
     } catch (error) {
       console.log('Error getting the route:', error);
       return { ok: false };

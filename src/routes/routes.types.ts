@@ -24,6 +24,10 @@ export interface completePoint {
   country: string;
 }
 
+export interface ErrorResponse {
+  message?: string;
+}
+
 export interface GraphhopperResponse {
   hints: {
     'visited_nodes.sum': number; //170,

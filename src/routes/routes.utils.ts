@@ -1,7 +1,7 @@
 import { europeCountriesISO } from '../assets/europeCountriesISO';
 import { decodePolyline, logPolyline, simplifyPolyline } from './polyline.utils';
 import { generateRoutesDetails } from './routes.details.util';
-import { ParsedRoute, Path, Waypoint } from './routes.types';
+import { ErrorResponse, IResponse, ParsedResponse, ParsedRoute, Path, Waypoint } from './routes.types';
 
 export const parsedRoutes = (
   path: Path,
@@ -9,7 +9,7 @@ export const parsedRoutes = (
 ): ParsedRoute => {
   const encodedPolyline = path.points;
   const decodedPolyline = decodePolyline(encodedPolyline);
-  const simplifiedPolyline = simplifyPolyline(decodedPolyline, 5)
+  const simplifiedPolyline = simplifyPolyline(decodedPolyline, 10)
   const cleanedPolyline = logPolyline(simplifiedPolyline);
 
   const waypointCoordinates = waypoints.map(
@@ -35,3 +35,19 @@ export const parsedRoutes = (
 
   return finalResponse;
 };
+
+export  const handleErrorResponse = (response: Response): IResponse<ParsedResponse> => {
+          const errorMsg = `HTTP Error ${response.status}: ${response.statusText}`
+          switch (response.status) {
+            case 400:
+              return { ok: false, error: `Bad Request: ${errorMsg}` };
+            case 401:
+              return { ok: false, error: `Unauthorized: ${errorMsg}` };
+            case 429:
+              return { ok: false, error: `Rate Limit Exceeded: ${errorMsg}` };
+            case 500:
+              return { ok: false, error: `Internal Server Error: ${errorMsg}` };
+            default:
+              return { ok: false, error: `HTTP Error ${response.status}: ${errorMsg}` };
+          }
+        }
