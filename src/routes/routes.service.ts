@@ -9,6 +9,7 @@ import {
   RoutesRequest,
 } from "./routes.types";
 import { handleErrorResponse, parsedRoutes } from "./routes.utils";
+import { logPolyline } from "./polyline.utils";
 
 dotenv.config();
 
@@ -40,11 +41,27 @@ export class RoutesService {
     };
 
     //TODO
-    /* if (requestPayload.points.length <= 2){
+
+    //algoritmo ruta alternativa. si ve puntos intermedios que saque rutas alternativas. según la documentación no puede hacerse y al probar da 400 bad request
+    //probar a pasarle más de un punto.más de dos puntos en principio no saca. confirmado, no se pueden meter waypoints
+    //a. no sacar más waypoints
+    //b. partirlas waypoints serian puntos finales e iniciales
+
+
+    //pruebas. 
+    //meter muchos puntos, hacer rutas muy largas, punto en el agua a ver qué devuelve ---->
+    //punto de ruta no válido ---->
+    //ruta imposible por medio de transporte ---->
+    //aislar los máximos errores posibles ---->
+    //qué inputs son sensibles al fallo ---->
+    //si paso x me devuelve y  ---->
+
+    // Configuración para rutas alternativas si hay dos puntos (inicio y fin) sin waypoints intermedios ----> sí funciona
+    if (requestPayload.points.length <= 2){
       
       requestPayload["alternative_route.max_paths"]= 2
       requestPayload['algorithm'] = "alternative_route"
-    } */
+    } 
 
     if (!validateRequestPayload(requestPayload)) {
       return { ok: false, error: "Invalid payload" };
@@ -71,6 +88,18 @@ export class RoutesService {
         .catch(console.error);
 
       writeFileSync("response.json", JSON.stringify(data));
+
+      //Lógica para obtener cleanedpoints en la terminal y así poder rescatar el string
+      // if (data && data.paths.length > 0) {
+      //   data.paths.forEach((path) => {
+      //     if (path.points) {
+      //       const cleanedPoints = logPolyline(path.points);
+      //       console.log(`Points: `,cleanedPoints)
+      //     }
+      //   });
+      // } else {
+      //   console.error('No paths found in response');
+      // }
 
       if (response.status !== 200) return handleErrorResponse(response);
 

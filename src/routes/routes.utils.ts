@@ -5,6 +5,7 @@ import { generateRoutesDetails } from './routes.details.util';
 import { GeoJsonLineString, IResponse, ParsedResponse, ParsedRoute, Path, Waypoint } from './routes.types';
 import * as turf from '@turf/turf'
 
+
 export const parsedRoutes = (
   path: Path,
   waypoints: Waypoint[],
