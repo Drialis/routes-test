@@ -7,7 +7,19 @@ export const validateCoordinates = (coordinates: [number, number][]): boolean =>
     );
 }
 
+export const validateLandCoordinates = async (latLand: number, lngLand: number): Promise<boolean> => {
 
+const urlNominatim = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latLand}&lon=${lngLand}&addressdetails=1`
+
+try {
+    const response = await fetch(urlNominatim);
+    const data = await response.json();
+    return !(data.error || !data.address || data.address.country === undefined);
+  } catch (error) {
+    console.log('Error fetching location data:', error);
+    return false;
+  }
+}
 
 export const validateRequestPayload = (payload: {
     points: [number, number][],

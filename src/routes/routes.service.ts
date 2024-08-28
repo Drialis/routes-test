@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import * as dotenv from "dotenv";
 import { writeFileSync } from "fs";
-import { validateCoordinates, validateRequestPayload } from "../routes/validation.utils";
+import { validateCoordinates, validateLandCoordinates, validateRequestPayload } from "../routes/validation.utils";
 import {
   GraphhopperResponse,
   IResponse,
@@ -27,18 +27,22 @@ export class RoutesService {
     const apiKey = process.env.GRAPH_HOPPER_API_KEY;
 
     //Validación de coordenadas antes de requestPayload ---> testeado, ok
-    const startLatNum = parseFloat(startLat);
-    const startLngNum = parseFloat(startLng);
-    const endLatNum = parseFloat(endLat);
-    const endLngNum = parseFloat(endLng);
     const coordinates: [number, number][] = [
-      [startLatNum, startLngNum], 
-      [endLatNum, endLngNum],
-       ...waypoints.map((wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number])
-    ]
+        [parseFloat(startLat), parseFloat(startLng)],
+        [parseFloat(endLat), parseFloat(endLng)],
+        ...waypoints.map((wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number])
+    ];
+
 if(!validateCoordinates(coordinates)){
  return { ok: false, error: "400: Invalid coordinates provided" }
 }
+
+    for (const [lng, lat] of coordinates) {
+      const onLand = await validateLandCoordinates(lat, lng);
+      if (!onLand) {
+        return { ok: false, error: "400: One or more coordinates are not on land" };
+      }
+    }
 
     const requestPayload = {
       points: [
@@ -59,18 +63,21 @@ if(!validateCoordinates(coordinates)){
 
     //algoritmo ruta alternativa. si ve puntos intermedios que saque rutas alternativas. ---> según la documentación no puede hacerse y al probar da 400 bad request
     //probar a pasarle más de un punto.más de dos puntos en principio no saca. ---> confirmado, no se pueden meter waypoints
+
     //a. no sacar más waypoints
     //b. partirlas waypoints serian puntos finales e iniciales
 
-
-    //pruebas. 
-    //meter muchos puntos, hacer rutas muy largas, punto en el agua a ver qué devuelve ----> ahora no devuelve points sino una polyline y no genera varios paths
+ //TODO: TEST
+    //meter muchos puntos, 
+    //hacer rutas muy largas ----> ahora no devuelve points sino una polyline y no genera varios paths
     //                     requestPayload['alternative_route.max_share_factor'] = 0.6; ----> modificando el max_share tampoco varía
 
-    //punto de ruta no válido ---->
+    //punto en el agua a ver qué devuelve ---> función de validación a través de la api nominatim.openstreetmap: en desarrollo
+
+    //punto de ruta no válido ----> función de validación: ok
     //ruta imposible por medio de transporte ---->
     //aislar los máximos errores posibles ---->
-    //qué inputs son sensibles al fallo ----> distancias mínimamente largas
+    //qué inputs son sensibles al fallo ----> rutas cuya separación entre un path y otro graph hopper considera que no debe ejecutar porque son demasiado similares
     //si paso x me devuelve y  ----> aquí suele dar un 200 y se queda tan ancho
 
     // Configuración para rutas alternativas si hay dos puntos (inicio y fin) sin waypoints intermedios ----> no funciona a no ser que sean dos puntos muy cercanos
