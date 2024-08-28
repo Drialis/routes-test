@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import * as dotenv from "dotenv";
 import { writeFileSync } from "fs";
-import { validateRequestPayload } from "../routes/validation.utils";
+import { validateCoordinates, validateRequestPayload } from "../routes/validation.utils";
 import {
   GraphhopperResponse,
   IResponse,
@@ -26,6 +26,20 @@ export class RoutesService {
   }: RoutesRequest): Promise<IResponse<ParsedResponse>> {
     const apiKey = process.env.GRAPH_HOPPER_API_KEY;
 
+    //Validación de coordenadas antes de requestPayload ---> testeado, ok
+    const startLatNum = parseFloat(startLat);
+    const startLngNum = parseFloat(startLng);
+    const endLatNum = parseFloat(endLat);
+    const endLngNum = parseFloat(endLng);
+    const coordinates: [number, number][] = [
+      [startLatNum, startLngNum], 
+      [endLatNum, endLngNum],
+       ...waypoints.map((wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number])
+    ]
+if(!validateCoordinates(coordinates)){
+ return { ok: false, error: "400: Invalid coordinates provided" }
+}
+
     const requestPayload = {
       points: [
         [parseFloat(startLng), parseFloat(startLat)] as [number, number],
@@ -40,27 +54,32 @@ export class RoutesService {
       calc_points: true,
     };
 
-    //TODO
 
-    //algoritmo ruta alternativa. si ve puntos intermedios que saque rutas alternativas. según la documentación no puede hacerse y al probar da 400 bad request
-    //probar a pasarle más de un punto.más de dos puntos en principio no saca. confirmado, no se pueden meter waypoints
+//TODO
+
+    //algoritmo ruta alternativa. si ve puntos intermedios que saque rutas alternativas. ---> según la documentación no puede hacerse y al probar da 400 bad request
+    //probar a pasarle más de un punto.más de dos puntos en principio no saca. ---> confirmado, no se pueden meter waypoints
     //a. no sacar más waypoints
     //b. partirlas waypoints serian puntos finales e iniciales
 
 
     //pruebas. 
-    //meter muchos puntos, hacer rutas muy largas, punto en el agua a ver qué devuelve ---->
+    //meter muchos puntos, hacer rutas muy largas, punto en el agua a ver qué devuelve ----> ahora no devuelve points sino una polyline y no genera varios paths
+    //                     requestPayload['alternative_route.max_share_factor'] = 0.6; ----> modificando el max_share tampoco varía
+
     //punto de ruta no válido ---->
     //ruta imposible por medio de transporte ---->
     //aislar los máximos errores posibles ---->
-    //qué inputs son sensibles al fallo ---->
-    //si paso x me devuelve y  ---->
+    //qué inputs son sensibles al fallo ----> distancias mínimamente largas
+    //si paso x me devuelve y  ----> aquí suele dar un 200 y se queda tan ancho
 
-    // Configuración para rutas alternativas si hay dos puntos (inicio y fin) sin waypoints intermedios ----> sí funciona
+    // Configuración para rutas alternativas si hay dos puntos (inicio y fin) sin waypoints intermedios ----> no funciona a no ser que sean dos puntos muy cercanos
+
     if (requestPayload.points.length <= 2){
       
       requestPayload["alternative_route.max_paths"]= 2
       requestPayload['algorithm'] = "alternative_route"
+      requestPayload['alternative_route.max_share_factor'] = 0.6;
     } 
 
     if (!validateRequestPayload(requestPayload)) {
@@ -89,12 +108,12 @@ export class RoutesService {
 
       writeFileSync("response.json", JSON.stringify(data));
 
-      //Lógica para obtener cleanedpoints en la terminal y así poder rescatar el string
+      // lógica para implementar los points en la terminal ya limpios de escapes. 
       // if (data && data.paths.length > 0) {
       //   data.paths.forEach((path) => {
       //     if (path.points) {
       //       const cleanedPoints = logPolyline(path.points);
-      //       console.log(`Points: `,cleanedPoints)
+      //       console.log(`Points:`,cleanedPoints)
       //     }
       //   });
       // } else {

@@ -7,6 +7,8 @@ export const validateCoordinates = (coordinates: [number, number][]): boolean =>
     );
 }
 
+
+
 export const validateRequestPayload = (payload: {
     points: [number, number][],
     profile?: string,
