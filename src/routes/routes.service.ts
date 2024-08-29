@@ -37,7 +37,7 @@ if(!validateCoordinates(coordinates)){
  return { ok: false, error: "400: Invalid coordinates provided" }
 }
 
-    for (const [lng, lat] of coordinates) {
+    for (const [lat, lng] of coordinates) {
       const onLand = await validateLandCoordinates(lat, lng);
       if (!onLand) {
         return { ok: false, error: "400: One or more coordinates are not on land" };
@@ -61,26 +61,27 @@ if(!validateCoordinates(coordinates)){
 
 //TODO
 
-    //algoritmo ruta alternativa. si ve puntos intermedios que saque rutas alternativas. ---> según la documentación no puede hacerse y al probar da 400 bad request
+    //algoritmo ruta alternativa. si ve puntos intermedios que saque rutas alternativas. ---> según la documentación no puede hacerse con waypoints solo con inicio y fin y al probar da 400 bad request
     //probar a pasarle más de un punto.más de dos puntos en principio no saca. ---> confirmado, no se pueden meter waypoints
 
     //a. no sacar más waypoints
-    //b. partirlas waypoints serian puntos finales e iniciales
-
- //TODO: TEST
+    
+    //TODO: TEST
     //meter muchos puntos, 
     //hacer rutas muy largas ----> ahora no devuelve points sino una polyline y no genera varios paths
     //                     requestPayload['alternative_route.max_share_factor'] = 0.6; ----> modificando el max_share tampoco varía
-
-    //punto en el agua a ver qué devuelve ---> función de validación a través de la api nominatim.openstreetmap: en desarrollo
-
-    //punto de ruta no válido ----> función de validación: ok
-    //ruta imposible por medio de transporte ---->
+    
+    
     //aislar los máximos errores posibles ---->
+    //punto en el agua a ver qué devuelve ---> función de  validación a través de la api nominatim.openstreetmap: en desarrollo
+    //punto de ruta no válido ----> función de validación: ok
+    //ruta imposible por medio de transporte ----> 
     //qué inputs son sensibles al fallo ----> rutas cuya separación entre un path y otro graph hopper considera que no debe ejecutar porque son demasiado similares
     //si paso x me devuelve y  ----> aquí suele dar un 200 y se queda tan ancho
-
+    
     // Configuración para rutas alternativas si hay dos puntos (inicio y fin) sin waypoints intermedios ----> no funciona a no ser que sean dos puntos muy cercanos
+    
+    //b. partir las waypoints serian puntos finales e iniciales
 
     if (requestPayload.points.length <= 2){
       

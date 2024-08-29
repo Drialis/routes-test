@@ -14,6 +14,10 @@ const urlNominatim = `https://nominatim.openstreetmap.org/reverse?format=json&la
 try {
     const response = await fetch(urlNominatim);
     const data = await response.json();
+
+    console.log(`Validating land coordinates: lat = ${latLand}, lng = ${lngLand}`);
+    console.log('Nominatim response:', data);
+
     return !(data.error || !data.address || data.address.country === undefined);
   } catch (error) {
     console.log('Error fetching location data:', error);
@@ -44,7 +48,7 @@ export const validateRequestPayload = (payload: {
     if (instructions !== undefined && typeof instructions !== 'boolean') {      //si se incluyen o no las instrucciones de navegación (ej.gira a la dcha)
         return false;
     }
-    if (calc_points !== undefined && typeof calc_points !== 'boolean') {        //son los waypoints
+    if (calc_points !== undefined && typeof calc_points !== 'boolean') {        
         return false;
     }
     return true;
