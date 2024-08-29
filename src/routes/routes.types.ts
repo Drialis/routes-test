@@ -77,6 +77,7 @@ export interface RoutesRequest {
   endLat: string,
   endLng: string,
   waypoints?: Waypoint[],
+  profile: string,
   distance_to_POI?: number;
 }
 

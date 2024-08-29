@@ -25,6 +25,23 @@ try {
   }
 }
 
+const validTransportProfiles = [
+    "car", 
+    "car_avoid_motorway", 
+    "car_avoid_ferry", 
+    "car_avoid_toll", 
+    "small_truck", 
+    "truck", 
+    "scooter", 
+    "foot", 
+    "hike", 
+    "bike", 
+    "mtb", 
+    "racingbike"
+];
+
+
+
 export const validateRequestPayload = (payload: {
     points: [number, number][],
     profile?: string,

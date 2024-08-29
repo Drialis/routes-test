@@ -23,6 +23,7 @@ export class RoutesService {
     endLat,
     endLng,
     waypoints = [],
+    profile = "car"
   }: RoutesRequest): Promise<IResponse<ParsedResponse>> {
     const apiKey = process.env.GRAPH_HOPPER_API_KEY;
 
@@ -44,6 +45,25 @@ if(!validateCoordinates(coordinates)){
       }
     }
 
+    const validTransportProfiles = [
+    "car", 
+    "car_avoid_motorway", 
+    "car_avoid_ferry", 
+    "car_avoid_toll", 
+    "small_truck", 
+    "truck", 
+    "scooter", 
+    "foot", 
+    "hike", 
+    "bike", 
+    "mtb", 
+    "racingbike"
+];
+
+if (!validTransportProfiles.includes(profile)) {
+      return { ok: false, error: `400: Invalid profile ${profile}` };
+    }
+
     const requestPayload = {
       points: [
         [parseFloat(startLng), parseFloat(startLat)] as [number, number],
@@ -52,7 +72,7 @@ if(!validateCoordinates(coordinates)){
         ),
         [parseFloat(endLng), parseFloat(endLat)] as [number, number],
       ],
-      profile: "car",
+      profile,
       details: ["max_speed", "toll", "country"],
       instructions: false,
       calc_points: true,
@@ -69,15 +89,17 @@ if(!validateCoordinates(coordinates)){
     //TODO: TEST
     //meter muchos puntos, 
     //hacer rutas muy largas ----> ahora no devuelve points sino una polyline y no genera varios paths
-    //                     requestPayload['alternative_route.max_share_factor'] = 0.6; ----> modificando el max_share tampoco varía
+    //        requestPayload['alternative_route.max_share_factor'] = 0.6; ----> modificando el max_share tampoco varía
     
     
-    //aislar los máximos errores posibles ---->
-    //punto en el agua a ver qué devuelve ---> función de  validación a través de la api nominatim.openstreetmap: en desarrollo
-    //punto de ruta no válido ----> función de validación: ok
+    //aislar los máximos errores posibles    ---->
+    //punto en el agua a ver qué devuelve    ----> función de validación a través de la api nominatim.openstreetmap: ok (la precisión no es exacta, se puede mejorar buscando otra api)
+    //punto de ruta no válido                ----> función de validación de coordenadas: ok
     //ruta imposible por medio de transporte ----> 
-    //qué inputs son sensibles al fallo ----> rutas cuya separación entre un path y otro graph hopper considera que no debe ejecutar porque son demasiado similares
-    //si paso x me devuelve y  ----> aquí suele dar un 200 y se queda tan ancho
+
+
+    //qué inputs son sensibles al fallo      ----> rutas cuya separación entre un path y otro graph hopper considera que no debe ejecutar porque son demasiado similares
+    //si paso x me devuelve y                ----> aquí suele dar un 200 y se queda tan ancho
     
     // Configuración para rutas alternativas si hay dos puntos (inicio y fin) sin waypoints intermedios ----> no funciona a no ser que sean dos puntos muy cercanos
     
@@ -91,6 +113,7 @@ if(!validateCoordinates(coordinates)){
     } 
 
     if (!validateRequestPayload(requestPayload)) {
+      console.log("Invalid Payload:", requestPayload);
       return { ok: false, error: "Invalid payload" };
     }
 
