@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import * as dotenv from "dotenv";
 import { writeFileSync } from "fs";
-import { validateCoordinates, validateLandCoordinates, validateRequestPayload } from "../routes/validation.utils";
+import { isVehicleValidForRoute, validateCoordinates, validateLandCoordinates, validateRequestPayload } from "../routes/validation.utils";
 import {
   GraphhopperResponse,
   IResponse,
@@ -96,7 +96,7 @@ if (!validTransportProfiles.includes(profile)) {
     //punto en el agua a ver qué devuelve    ----> función de validación a través de la api nominatim.openstreetmap: ok (la precisión no es exacta, se puede mejorar buscando otra api)
     //punto de ruta no válido                ----> función de validación de coordenadas: ok
     //ruta imposible por medio de transporte ----> en principio necesitaríamos un custom model profile que todavía está en desarrollo en la api de graphhopper, solo disponible actualmente en profile car y para clientes premium
-
+    //                                       ----> condicional para verificar que la ruta sea válida con cada vehículo
 
     //qué inputs son sensibles al fallo      ----> rutas cuya separación entre un path y otro graph hopper considera que no debe ejecutar porque son demasiado similares
     //si paso x me devuelve y                ----> aquí suele dar un 200 y se queda tan ancho
@@ -154,24 +154,22 @@ if (!validTransportProfiles.includes(profile)) {
         return handleErrorResponse(response)
       }
 
-      if (!data?.paths?.length) {
-        if (validTransportProfiles.includes(profile)) {
-          return { 
-            ok: false, 
-            error: `400: Route is not possible with profile ${profile}. Consider checking coordinates or selecting a different profile.` };
-        } else{
-          return{
-            ok:false,
-            error: `400: Route is not possible with profile ${profile}.`
-          }
-        }
+      const isRouteValid = isVehicleValidForRoute(data, profile);
+
+      if (!isRouteValid) {
+        return { 
+          ok: false, 
+          error: `400: Route is not possible with profile ${profile}. The route is not valid for the selected vehicle type, try a different one.` 
+        };
       }
+
+      
         return {
         ok: true,
         data: {
           routes: data.paths.map((path) => parsedRoutes(path, waypoints)),
         },
-      };
+      }
     } catch (error) {
       console.log("Error getting the route:", error);
       return { ok: false };

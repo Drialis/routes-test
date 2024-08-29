@@ -1,3 +1,5 @@
+import { GraphhopperResponse } from "./routes.types";
+
 export const validateCoordinates = (coordinates: [number, number][]): boolean => {
     return coordinates.every(([lng, lat]) =>
         !isNaN(lng) && !isNaN(lat) &&
@@ -25,21 +27,33 @@ try {
   }
 }
 
-const validTransportProfiles = [
-    "car", 
-    "car_avoid_motorway", 
-    "car_avoid_ferry", 
-    "car_avoid_toll", 
-    "small_truck", 
-    "truck", 
-    "scooter", 
-    "foot", 
-    "hike", 
-    "bike", 
-    "mtb", 
-    "racingbike"
-];
+export const isVehicleValidForRoute = (data: GraphhopperResponse | null, profile: string): boolean => {
+    if (!data?.paths?.length) {
+        return false;  
+    }
 
+    // Condiciones específicas para perfiles de vehículos a motor
+    const motorVehicleProfiles = [
+        "car", 
+        "car_avoid_motorway", 
+        "car_avoid_ferry",  
+        "small_truck", 
+        "truck", 
+    ];
+
+    if (motorVehicleProfiles.includes(profile)) {
+        return data.paths.every(path => {
+            const tollDetails = path.details?.toll;
+            if (Array.isArray(tollDetails)) {
+                // Verifica si la tercera posición de la tupla es "true"
+                return tollDetails.every(([start, end, tollType]) => tollType !== 'true');
+            }
+            return false;
+        });
+    }
+
+    return true;
+}
 
 
 export const validateRequestPayload = (payload: {

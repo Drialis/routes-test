@@ -12,7 +12,7 @@ export const parsedRoutes = (
 ): ParsedRoute => {
   const encodedPolyline = path.points;
   const decodedPolyline = decodePolyline(encodedPolyline);
- // const simplifiedPolyline = simplifyPolyline(decodedPolyline, 17)
+  const simplifiedPolyline = simplifyPolyline(decodedPolyline, 17)
   const cleanedPolyline = logPolyline(encodedPolyline);
 
   const originalGeoJSON: GeoJsonLineString = {
@@ -40,8 +40,8 @@ export const parsedRoutes = (
       descend: path.descend || 0,
     },
     waypoints: waypointCoordinates,
-    POIs: POIsWithinBBox
-    //  complete_info: generateRoutesDetails(path, europeCountriesISO, decodedPolyline),  //descomentar también de parsedRoute
+    POIs: POIsWithinBBox,
+    complete_info: generateRoutesDetails(path, europeCountriesISO, decodedPolyline),  //descomentar también de parsedRoute
   };
 
   return finalResponse;
