@@ -64,14 +64,24 @@ if (!validTransportProfiles.includes(profile)) {
       return { ok: false, error: `400: Invalid profile ${profile}` };
     }
 
+    const basePoints: [number, number][] = [
+      [parseFloat(startLng), parseFloat(startLat)],
+      [parseFloat(endLng), parseFloat(endLat)],
+    ];
+
+    const waypointsPoints: [number, number][] = waypoints.map(
+      (wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number]
+    );
+
     const requestPayload: any = {
-      points: [
-        [parseFloat(startLng), parseFloat(startLat)] as [number, number],
-        ...waypoints.map(
-          (wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number]
-        ),
-        [parseFloat(endLng), parseFloat(endLat)] as [number, number],
-      ],
+      points: basePoints.concat(waypointsPoints),
+      // [
+      //   [parseFloat(startLng), parseFloat(startLat)] as [number, number],
+      //   ...waypoints.map(
+      //     (wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number]
+      //   ),
+      //   [parseFloat(endLng), parseFloat(endLat)] as [number, number],
+      // ],
       profile,
       details: ["max_speed", "toll", "country"],
       instructions: false,
@@ -101,12 +111,19 @@ if (!validTransportProfiles.includes(profile)) {
     //qué inputs son sensibles al fallo      ----> rutas cuya separación entre un path y otro graph hopper considera que no debe ejecutar porque son demasiado similares
     //si paso x me devuelve y                ----> aquí suele dar un 200 y se queda tan ancho
     
-    // Configuración para rutas alternativas si hay dos puntos (inicio y fin) sin waypoints intermedios ----> no funciona a no ser que sean dos puntos muy cercanos
+    // Configuración para rutas alternativas si hay dos puntos (inicio y fin) sin waypoints intermedios 
+    //         ----> no funciona a no ser que sean dos puntos muy cercanos
     
     //b. partir las waypoints serian puntos finales e iniciales
+    //         ----> separada la lógica de waypoints para que cuando haya no se generen rutas alternativas y cuando no haya sí se generen
 
-    if (requestPayload.points.length <= 2){
-      
+
+    if (waypoints.length > 0){    
+      requestPayload["alternative_route.max_paths"] = undefined
+      requestPayload["algorithm"] = undefined
+      requestPayload["alternative_route.max_share_factor"] = undefined
+    }
+    else{
       requestPayload["alternative_route.max_paths"]= 2
       requestPayload['algorithm'] = "alternative_route"
       requestPayload['alternative_route.max_share_factor'] = 0.6;
@@ -163,7 +180,7 @@ if (!validTransportProfiles.includes(profile)) {
         };
       }
 
-      
+
         return {
         ok: true,
         data: {

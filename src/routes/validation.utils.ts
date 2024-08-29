@@ -45,7 +45,6 @@ export const isVehicleValidForRoute = (data: GraphhopperResponse | null, profile
         return data.paths.every(path => {
             const tollDetails = path.details?.toll;
             if (Array.isArray(tollDetails)) {
-                // Verifica si la tercera posición de la tupla es "true"
                 return tollDetails.every(([start, end, tollType]) => tollType !== 'true');
             }
             return false;
