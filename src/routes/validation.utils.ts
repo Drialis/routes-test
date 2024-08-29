@@ -62,7 +62,7 @@ export const validateRequestPayload = (payload: {
     if (details !== undefined && (!Array.isArray(details) || !details.every(detail => typeof detail === 'string'))) {
         return false;
     }
-    if (instructions !== undefined && typeof instructions !== 'boolean') {      //si se incluyen o no las instrucciones de navegación (ej.gira a la dcha)
+    if (instructions !== undefined && typeof instructions !== 'boolean') {      
         return false;
     }
     if (calc_points !== undefined && typeof calc_points !== 'boolean') {        

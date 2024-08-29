@@ -64,7 +64,7 @@ if (!validTransportProfiles.includes(profile)) {
       return { ok: false, error: `400: Invalid profile ${profile}` };
     }
 
-    const requestPayload = {
+    const requestPayload: any = {
       points: [
         [parseFloat(startLng), parseFloat(startLat)] as [number, number],
         ...waypoints.map(
@@ -95,7 +95,7 @@ if (!validTransportProfiles.includes(profile)) {
     //aislar los máximos errores posibles    ---->
     //punto en el agua a ver qué devuelve    ----> función de validación a través de la api nominatim.openstreetmap: ok (la precisión no es exacta, se puede mejorar buscando otra api)
     //punto de ruta no válido                ----> función de validación de coordenadas: ok
-    //ruta imposible por medio de transporte ----> 
+    //ruta imposible por medio de transporte ----> en principio necesitaríamos un custom model profile que todavía está en desarrollo en la api de graphhopper, solo disponible actualmente en profile car y para clientes premium
 
 
     //qué inputs son sensibles al fallo      ----> rutas cuya separación entre un path y otro graph hopper considera que no debe ejecutar porque son demasiado similares
@@ -130,7 +130,6 @@ if (!validTransportProfiles.includes(profile)) {
           body: JSON.stringify(requestPayload),
         }
       );
-
       console.log(response.status, response.statusText);
 
       const data: GraphhopperResponse | null = await response
@@ -151,11 +150,23 @@ if (!validTransportProfiles.includes(profile)) {
       //   console.error('No paths found in response');
       // }
 
-      if (response.status !== 200) return handleErrorResponse(response);
+      if (response.status !== 200) {
+        return handleErrorResponse(response)
+      }
 
-      if (!data?.paths?.length) return { ok: false, error: "No routes found" };
-
-      return {
+      if (!data?.paths?.length) {
+        if (validTransportProfiles.includes(profile)) {
+          return { 
+            ok: false, 
+            error: `400: Route is not possible with profile ${profile}. Consider checking coordinates or selecting a different profile.` };
+        } else{
+          return{
+            ok:false,
+            error: `400: Route is not possible with profile ${profile}.`
+          }
+        }
+      }
+        return {
         ok: true,
         data: {
           routes: data.paths.map((path) => parsedRoutes(path, waypoints)),
