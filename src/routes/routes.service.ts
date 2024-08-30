@@ -1,8 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import * as dotenv from "dotenv";
 import { writeFileSync } from "fs";
-import { isVehicleValidForRoute, validateCoordinates, validateLandCoordinates, validateRequestPayload } from "../routes/validation.utils";
+import { validateCoordinates, validateLandCoordinates, validateRequestPayload } from "../routes/validation.utils";
 import {
+  GenerateSegmentedRoutes,
   GraphhopperResponse,
   IResponse,
   ParsedResponse,
@@ -11,9 +12,45 @@ import {
   RoutesRequest,
 } from "./routes.types";
 import { handleErrorResponse, parsedRoutes } from "./routes.utils";
-import { distance } from "@turf/turf";
 
 dotenv.config();
+
+    enum validTransportProfiles { 
+      car = "car", 
+      car_avoid_motorway = "car_avoid_motorway", 
+      car_avoid_ferry = "car_avoid_ferry", 
+      car_avoid_toll = "car_avoid_toll", 
+      small_truck = "small_truck", 
+      truck = "truck", 
+      scooter = "scooter", 
+      foot = "foot", 
+      hike = "hike", 
+      bike = "bike", 
+      mtb = "mtb", 
+      racingbike = "racingbike"
+    }
+    
+export const generateSegmentedRoutes = (
+{   start,
+    end,
+    waypoints} : GenerateSegmentedRoutes
+   ): [number, number][][] => {
+ const firstSegment: [number, number][] = [start, null];
+ const segments: [number, number][][] = [firstSegment];
+
+ //TODO: podría no ser tan categórico, if de seguridad por si falla
+ waypoints.forEach((waypoint) => {
+  const segment = segments.pop()
+  segment[1] = [parseFloat(waypoint.lng), parseFloat(waypoint.lat)]
+  segments.push(segment);
+  segments.push([segment[1], null])
+  
+});
+  const lastSegment = segments.pop();
+  lastSegment[1] = end
+  segments.push(lastSegment)
+  return segments
+  }
 
 @Injectable()
 export class RoutesService {
@@ -46,79 +83,41 @@ export class RoutesService {
       }
     }
 
-    const validTransportProfiles = [
-      "car", 
-      "car_avoid_motorway", 
-      "car_avoid_ferry", 
-      "car_avoid_toll", 
-      "small_truck", 
-      "truck", 
-      "scooter", 
-      "foot", 
-      "hike", 
-      "bike", 
-      "mtb", 
-      "racingbike"
-    ];
-
-    if (!validTransportProfiles.includes(profile)) {
+    if (!validTransportProfiles[profile]) {
       return { ok: false, error: `400: Invalid profile ${profile}` };
     }
 
     try {
-      // Generar las rutas individuales
-      const segments: ParsedRoute[] = (await this.generateSegmentedRoutes(
-        [parseFloat(startLng), parseFloat(startLat)],
-        [parseFloat(endLng), parseFloat(endLat)],
-        waypoints,
-        profile,
-        apiKey
-      ));
 
-      return { ok: true, data: { routes: segments } };
+       const segments = generateSegmentedRoutes({
+        start: [parseFloat(startLng), parseFloat(startLat)],
+        end: [parseFloat(endLng), parseFloat(endLat)],
+        waypoints
+      });
 
+      const routesPromises = segments.map(async (segment) => {
+        const requestPayload: RoutePayload = {
+          points: segment,
+          profile,
+          details: ["max_speed", "toll", "country"],
+          instructions: false,
+          calc_points: true,
+        };
+
+        return this.fetchRoute(requestPayload, apiKey);
+      });
+
+      const responses = await Promise.all(routesPromises);
+      const validResponses = responses.filter(response => response.ok);
+      if (validResponses.length > 0) {
+        return { ok: true, data: { routes: validResponses.map(response => response.data) } };
+      } else {
+        return { ok: false, error: "No valid routes found." };
+      }
     } catch (error) {
       console.log("Error getting the route:", error);
       return { ok: false, error: error.message };
     }
-  }
-
-  // Nueva función para manejar la generación de rutas por segmentos
-  private async generateSegmentedRoutes(
-    start: [number, number],
-    end: [number, number],
-    waypoints: { lat: string, lng: string }[],
-    profile: string,
-    apiKey: string
-  ): Promise<ParsedRoute[]> {
-    const segments: ParsedRoute[] = [];
-    let currentStart: [number, number] = start;
-
-    for (let i = 0; i <= waypoints.length; i++) {
-      const currentEnd: [number, number] = i < waypoints.length ? 
-        [parseFloat(waypoints[i].lng), parseFloat(waypoints[i].lat)] : 
-        end;
-
-      const requestPayload: RoutePayload = {
-        points: [currentStart, currentEnd],
-        profile,
-        details: ["max_speed", "toll", "country"],
-        instructions: false,
-        calc_points: true,
-      };
-
-      const response = await this.fetchRoute(requestPayload, apiKey);
-
-      if (response.ok && response.data) {
-        segments.push(response.data);
-      } else {
-        throw new Error("Failed to fetch route for segment");
-      }
-
-      currentStart = currentEnd;
-    }
-
-    return segments;
   }
 
   // Función para hacer la llamada a la API
@@ -147,8 +146,11 @@ export class RoutesService {
 
      writeFileSync("response.json", JSON.stringify(data));
 
-    if (data && data.paths && data.paths.length > 0) {
+    if (data?.paths?.length) {
       const parsedRoute: ParsedRoute =  parsedRoutes(data.paths[0], []);
+     
+     
+     
       return { ok: true, data: parsedRoute };
     } else {
       return { ok: false, error: "No routes found in the response." };

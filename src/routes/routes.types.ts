@@ -100,3 +100,9 @@ export interface GeoJsonLineString {
   type: 'LineString';
   coordinates: [number, number][];
 };
+
+export  interface GenerateSegmentedRoutes{
+    start: [number, number],
+    end: [number, number],
+    waypoints: { lat: string, lng: string}[]
+  }
