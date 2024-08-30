@@ -79,6 +79,8 @@ export interface RoutePayload {
   algorithm?: string; 
   'alternative_route.max_paths'?: number; 
   'alternative_route.max_share_factor'?: number;
+  //TODO: añadir weight y hacer pruebas para ver si hay mejora significativa
+  "alternative_route.max_weight_factor": number,
 }
 
 export interface RoutesRequest {
@@ -106,3 +108,19 @@ export  interface GenerateSegmentedRoutes{
     end: [number, number],
     waypoints: { lat: string, lng: string}[]
   }
+
+  export enum validTransportProfiles { 
+      car = "car", 
+      car_avoid_motorway = "car_avoid_motorway", 
+      car_avoid_ferry = "car_avoid_ferry", 
+      car_avoid_toll = "car_avoid_toll", 
+      small_truck = "small_truck", 
+      truck = "truck", 
+      scooter = "scooter", 
+      foot = "foot", 
+      hike = "hike", 
+      bike = "bike", 
+      mtb = "mtb", 
+      racingbike = "racingbike"
+    }
+    

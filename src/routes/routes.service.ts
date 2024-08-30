@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import * as dotenv from "dotenv";
 import { writeFileSync } from "fs";
-import { validateCoordinates, validateLandCoordinates, validateRequestPayload } from "../routes/validation.utils";
+import { validateCoordinates, validateLandCoordinates } from "../routes/validation.utils";
 import {
   GenerateSegmentedRoutes,
   GraphhopperResponse,
@@ -10,26 +10,12 @@ import {
   ParsedRoute,
   RoutePayload,
   RoutesRequest,
+  validTransportProfiles,
 } from "./routes.types";
 import { handleErrorResponse, parsedRoutes } from "./routes.utils";
 
 dotenv.config();
 
-    enum validTransportProfiles { 
-      car = "car", 
-      car_avoid_motorway = "car_avoid_motorway", 
-      car_avoid_ferry = "car_avoid_ferry", 
-      car_avoid_toll = "car_avoid_toll", 
-      small_truck = "small_truck", 
-      truck = "truck", 
-      scooter = "scooter", 
-      foot = "foot", 
-      hike = "hike", 
-      bike = "bike", 
-      mtb = "mtb", 
-      racingbike = "racingbike"
-    }
-    
 export const generateSegmentedRoutes = (
 {   start,
     end,
@@ -69,7 +55,7 @@ export class RoutesService {
     const coordinates: [number, number][] = [
         [parseFloat(startLat), parseFloat(startLng)],
         [parseFloat(endLat), parseFloat(endLng)],
-        ...waypoints.map((wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number])
+        ...waypoints.map((wp) => [parseFloat(wp.lat), parseFloat(wp.lng)] as [number, number])
     ];
 
     if (!validateCoordinates(coordinates)) {
@@ -102,6 +88,9 @@ export class RoutesService {
           details: ["max_speed", "toll", "country"],
           instructions: false,
           calc_points: true,
+            "alternative_route.max_paths": 2,  
+            "alternative_route.max_share_factor": 0.6,
+            "alternative_route.max_weight_factor": 1
         };
 
         return this.fetchRoute(requestPayload, apiKey);

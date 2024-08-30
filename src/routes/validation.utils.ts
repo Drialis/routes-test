@@ -15,6 +15,11 @@ const urlNominatim = `https://nominatim.openstreetmap.org/reverse?format=json&la
 
 try {
     const response = await fetch(urlNominatim);
+
+    if( !response.ok){
+        console.log(`HTTP Error: ${response.status} ${response.statusText}`)
+        return false
+    }
     const data = await response.json();
 
     console.log(`Validating land coordinates: lat = ${latLand}, lng = ${lngLand}`);
