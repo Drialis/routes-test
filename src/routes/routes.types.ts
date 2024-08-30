@@ -79,8 +79,6 @@ export interface RoutePayload {
   algorithm?: string; 
   'alternative_route.max_paths'?: number; 
   'alternative_route.max_share_factor'?: number;
-  //TODO: añadir weight y hacer pruebas para ver si hay mejora significativa
-  "alternative_route.max_weight_factor": number,
 }
 
 export interface RoutesRequest {
@@ -90,6 +88,7 @@ export interface RoutesRequest {
   endLng: string,
   waypoints?: Waypoint[],
   profile: string,
+  distance?: number,
   distance_to_POI?: number;
 }
 

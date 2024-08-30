@@ -21,20 +21,34 @@ export const generateSegmentedRoutes = (
     end,
     waypoints} : GenerateSegmentedRoutes
    ): [number, number][][] => {
- const firstSegment: [number, number][] = [start, null];
- const segments: [number, number][][] = [firstSegment];
+ //const firstSegment: [number, number][] = [start, null];
+ const segments: [number, number][][] = [] //[firstSegment];
 
  //TODO: podría no ser tan categórico, if de seguridad por si falla
- waypoints.forEach((waypoint) => {
-  const segment = segments.pop()
-  segment[1] = [parseFloat(waypoint.lng), parseFloat(waypoint.lat)]
-  segments.push(segment);
-  segments.push([segment[1], null])
+ if(waypoints.length === 0){
+  segments.push([start, end])
+ } else {
+  let previousPoint = start
   
-});
-  const lastSegment = segments.pop();
-  lastSegment[1] = end
-  segments.push(lastSegment)
+  waypoints.forEach(waypoint => {
+    const currentPoint: [number, number] = [parseFloat(waypoint.lng), parseFloat(waypoint.lat)]
+    segments.push([previousPoint, currentPoint])
+    previousPoint = currentPoint
+  })
+  segments.push([previousPoint, end])
+ }
+ 
+//  waypoints.forEach((waypoint) => {
+//   const segment = segments.pop()
+//   segment[1] = [parseFloat(waypoint.lng), parseFloat(waypoint.lat)]
+//   segments.push(segment);
+//   segments.push([segment[1], null])
+// });
+
+//   const lastSegment = segments.pop();
+//   lastSegment[1] = end
+//   segments.push(lastSegment)
+
   return segments
   }
 
@@ -48,7 +62,8 @@ export class RoutesService {
     endLat,
     endLng,
     waypoints = [],
-    profile = "car"
+    profile = "car",
+    distance = 1000
   }: RoutesRequest): Promise<IResponse<ParsedResponse>> {
     const apiKey = process.env.GRAPH_HOPPER_API_KEY;
 
@@ -89,8 +104,7 @@ export class RoutesService {
           instructions: false,
           calc_points: true,
             "alternative_route.max_paths": 2,  
-            "alternative_route.max_share_factor": 0.6,
-            "alternative_route.max_weight_factor": 1
+            "alternative_route.max_share_factor": 0.6
         };
 
         return this.fetchRoute(requestPayload, apiKey);
