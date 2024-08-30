@@ -6,10 +6,12 @@ import {
   GraphhopperResponse,
   IResponse,
   ParsedResponse,
+  ParsedRoute,
+  RoutePayload,
   RoutesRequest,
 } from "./routes.types";
 import { handleErrorResponse, parsedRoutes } from "./routes.utils";
-import { logPolyline } from "./polyline.utils";
+import { distance } from "@turf/turf";
 
 dotenv.config();
 
@@ -27,16 +29,15 @@ export class RoutesService {
   }: RoutesRequest): Promise<IResponse<ParsedResponse>> {
     const apiKey = process.env.GRAPH_HOPPER_API_KEY;
 
-    //Validación de coordenadas antes de requestPayload ---> testeado, ok
     const coordinates: [number, number][] = [
         [parseFloat(startLat), parseFloat(startLng)],
         [parseFloat(endLat), parseFloat(endLng)],
         ...waypoints.map((wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number])
     ];
 
-if(!validateCoordinates(coordinates)){
- return { ok: false, error: "400: Invalid coordinates provided" }
-}
+    if (!validateCoordinates(coordinates)) {
+      return { ok: false, error: "400: Invalid coordinates provided" };
+    }
 
     for (const [lat, lng] of coordinates) {
       const onLand = await validateLandCoordinates(lat, lng);
@@ -46,53 +47,119 @@ if(!validateCoordinates(coordinates)){
     }
 
     const validTransportProfiles = [
-    "car", 
-    "car_avoid_motorway", 
-    "car_avoid_ferry", 
-    "car_avoid_toll", 
-    "small_truck", 
-    "truck", 
-    "scooter", 
-    "foot", 
-    "hike", 
-    "bike", 
-    "mtb", 
-    "racingbike"
-];
+      "car", 
+      "car_avoid_motorway", 
+      "car_avoid_ferry", 
+      "car_avoid_toll", 
+      "small_truck", 
+      "truck", 
+      "scooter", 
+      "foot", 
+      "hike", 
+      "bike", 
+      "mtb", 
+      "racingbike"
+    ];
 
-if (!validTransportProfiles.includes(profile)) {
+    if (!validTransportProfiles.includes(profile)) {
       return { ok: false, error: `400: Invalid profile ${profile}` };
     }
 
-    const basePoints: [number, number][] = [
-      [parseFloat(startLng), parseFloat(startLat)],
-      [parseFloat(endLng), parseFloat(endLat)],
-    ];
+    try {
+      // Generar las rutas individuales
+      const segments: ParsedRoute[] = (await this.generateSegmentedRoutes(
+        [parseFloat(startLng), parseFloat(startLat)],
+        [parseFloat(endLng), parseFloat(endLat)],
+        waypoints,
+        profile,
+        apiKey
+      ));
 
-    const waypointsPoints: [number, number][] = waypoints.map(
-      (wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number]
+      return { ok: true, data: { routes: segments } };
+
+    } catch (error) {
+      console.log("Error getting the route:", error);
+      return { ok: false, error: error.message };
+    }
+  }
+
+  // Nueva función para manejar la generación de rutas por segmentos
+  private async generateSegmentedRoutes(
+    start: [number, number],
+    end: [number, number],
+    waypoints: { lat: string, lng: string }[],
+    profile: string,
+    apiKey: string
+  ): Promise<ParsedRoute[]> {
+    const segments: ParsedRoute[] = [];
+    let currentStart: [number, number] = start;
+
+    for (let i = 0; i <= waypoints.length; i++) {
+      const currentEnd: [number, number] = i < waypoints.length ? 
+        [parseFloat(waypoints[i].lng), parseFloat(waypoints[i].lat)] : 
+        end;
+
+      const requestPayload: RoutePayload = {
+        points: [currentStart, currentEnd],
+        profile,
+        details: ["max_speed", "toll", "country"],
+        instructions: false,
+        calc_points: true,
+      };
+
+      const response = await this.fetchRoute(requestPayload, apiKey);
+
+      if (response.ok && response.data) {
+        segments.push(response.data);
+      } else {
+        throw new Error("Failed to fetch route for segment");
+      }
+
+      currentStart = currentEnd;
+    }
+
+    return segments;
+  }
+
+  // Función para hacer la llamada a la API
+  private async fetchRoute(
+    requestPayload: RoutePayload,
+    apiKey: string
+  ): Promise<IResponse<ParsedRoute>> {
+    const response = await fetch(
+      `https://graphhopper.com/api/1/route?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestPayload),
+      }
     );
 
-    const requestPayload: any = {
-      points: basePoints.concat(waypointsPoints),
-      // [
-      //   [parseFloat(startLng), parseFloat(startLat)] as [number, number],
-      //   ...waypoints.map(
-      //     (wp) => [parseFloat(wp.lng), parseFloat(wp.lat)] as [number, number]
-      //   ),
-      //   [parseFloat(endLng), parseFloat(endLat)] as [number, number],
-      // ],
-      profile,
-      details: ["max_speed", "toll", "country"],
-      instructions: false,
-      calc_points: true,
-    };
+    if (response.status !== 200) {
+      return handleErrorResponse(response);
+    }
 
+    const data: GraphhopperResponse | null = await response
+    .json()
+    .catch(console.error);
+
+     writeFileSync("response.json", JSON.stringify(data));
+
+    if (data && data.paths && data.paths.length > 0) {
+      const parsedRoute: ParsedRoute =  parsedRoutes(data.paths[0], []);
+      return { ok: true, data: parsedRoute };
+    } else {
+      return { ok: false, error: "No routes found in the response." };
+    }
+  }
+}
 
 //TODO
 
     //algoritmo ruta alternativa. si ve puntos intermedios que saque rutas alternativas. ---> según la documentación no puede hacerse con waypoints solo con inicio y fin y al probar da 400 bad request
-    //probar a pasarle más de un punto.más de dos puntos en principio no saca. ---> confirmado, no se pueden meter waypoints
+    //probar a pasarle más de un punto.más de dos puntos en principio no saca.           ---> confirmado, no se pueden meter waypoints
 
     //a. no sacar más waypoints
     
@@ -115,81 +182,5 @@ if (!validTransportProfiles.includes(profile)) {
     //         ----> no funciona a no ser que sean dos puntos muy cercanos
     
     //b. partir las waypoints serian puntos finales e iniciales
-    //         ----> separada la lógica de waypoints para que cuando haya no se generen rutas alternativas y cuando no haya sí se generen
-
-
-    if (waypoints.length > 0){    
-      requestPayload["alternative_route.max_paths"] = undefined
-      requestPayload["algorithm"] = undefined
-      requestPayload["alternative_route.max_share_factor"] = undefined
-    }
-    else{
-      requestPayload["alternative_route.max_paths"]= 2
-      requestPayload['algorithm'] = "alternative_route"
-      requestPayload['alternative_route.max_share_factor'] = 0.6;
-    } 
-
-    if (!validateRequestPayload(requestPayload)) {
-      console.log("Invalid Payload:", requestPayload);
-      return { ok: false, error: "Invalid payload" };
-    }
-
-    console.log("Request Payload:", requestPayload);
-
-    try {
-      const response = await fetch(
-        `https://graphhopper.com/api/1/route?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestPayload),
-        }
-      );
-      console.log(response.status, response.statusText);
-
-      const data: GraphhopperResponse | null = await response
-        .json()
-        .catch(console.error);
-
-      writeFileSync("response.json", JSON.stringify(data));
-
-      // lógica para implementar los points en la terminal ya limpios de escapes. 
-      // if (data && data.paths.length > 0) {
-      //   data.paths.forEach((path) => {
-      //     if (path.points) {
-      //       const cleanedPoints = logPolyline(path.points);
-      //       console.log(`Points:`,cleanedPoints)
-      //     }
-      //   });
-      // } else {
-      //   console.error('No paths found in response');
-      // }
-
-      if (response.status !== 200) {
-        return handleErrorResponse(response)
-      }
-
-      const isRouteValid = isVehicleValidForRoute(data, profile);
-
-      if (!isRouteValid) {
-        return { 
-          ok: false, 
-          error: `400: Route is not possible with profile ${profile}. The route is not valid for the selected vehicle type, try a different one.` 
-        };
-      }
-
-
-        return {
-        ok: true,
-        data: {
-          routes: data.paths.map((path) => parsedRoutes(path, waypoints)),
-        },
-      }
-    } catch (error) {
-      console.log("Error getting the route:", error);
-      return { ok: false };
-    }
-  }
-}
+    //b.1 hacer que cada waypoint sea una ruta independiente      ----> ok
+    //b.2 longitud de ruta máxima y waypoints máximos             ----> 

@@ -47,7 +47,7 @@ export const parsedRoutes = (
   return finalResponse;
 };
 
-export const handleErrorResponse = (response: Response): IResponse<ParsedResponse> => {
+export const handleErrorResponse = (response: Response): IResponse<ParsedRoute> => {
   const errorMsg = `HTTP Error ${response.status}: ${response.statusText}`
   switch (response.status) {
     case 400:

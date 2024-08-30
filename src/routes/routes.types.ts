@@ -61,7 +61,7 @@ export interface Path {
 export interface PathDetails {
   country: [number, number, string | null][];
   max_speed: [number, number, number | null][];
-  toll: [number, number, string | null][]; //TODO: Definir el tipo según la doc
+  toll: [number, number, string | null][]; 
 }
 
 export interface IResponse<T = any> {
@@ -70,6 +70,16 @@ export interface IResponse<T = any> {
   error?: string;
 }
 
+export interface RoutePayload {
+  points: [number, number][];
+  profile: string;
+  details: string [];
+  instructions: boolean;
+  calc_points: boolean;
+  algorithm?: string; 
+  'alternative_route.max_paths'?: number; 
+  'alternative_route.max_share_factor'?: number;
+}
 
 export interface RoutesRequest {
   startLat: string,
