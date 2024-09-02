@@ -21,10 +21,11 @@ export class RoutesController {
                 endLat,
                 endLng,
                 waypoints = [],
-                profile
+                profile,
+                distance
             } = body;
 
-            const polylineResponse = await this.routesService.getPolyline({ startLat, startLng, waypoints, endLat, endLng, profile });
+            const polylineResponse = await this.routesService.getPolyline({ startLat, startLng, waypoints, endLat, endLng, profile, distance });
             if (!polylineResponse?.ok) {
                 return res.status(400).send(polylineResponse?.error)
             }

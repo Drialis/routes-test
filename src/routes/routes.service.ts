@@ -3,7 +3,6 @@ import * as dotenv from "dotenv";
 import { writeFileSync } from "fs";
 import { validateCoordinates, validateLandCoordinates } from "../routes/validation.utils";
 import {
-  GenerateSegmentedRoutes,
   GraphhopperResponse,
   IResponse,
   ParsedResponse,
@@ -12,45 +11,9 @@ import {
   RoutesRequest,
   validTransportProfiles,
 } from "./routes.types";
-import { handleErrorResponse, parsedRoutes } from "./routes.utils";
+import { generateSegmentedRoutes, handleErrorResponse, parsedRoutes } from "./routes.utils";
 
 dotenv.config();
-
-export const generateSegmentedRoutes = (
-{   start,
-    end,
-    waypoints} : GenerateSegmentedRoutes
-   ): [number, number][][] => {
- //const firstSegment: [number, number][] = [start, null];
- const segments: [number, number][][] = [] //[firstSegment];
-
- //TODO: podría no ser tan categórico, if de seguridad por si falla
- if(waypoints.length === 0){
-  segments.push([start, end])
- } else {
-  let previousPoint = start
-  
-  waypoints.forEach(waypoint => {
-    const currentPoint: [number, number] = [parseFloat(waypoint.lng), parseFloat(waypoint.lat)]
-    segments.push([previousPoint, currentPoint])
-    previousPoint = currentPoint
-  })
-  segments.push([previousPoint, end])
- }
- 
-//  waypoints.forEach((waypoint) => {
-//   const segment = segments.pop()
-//   segment[1] = [parseFloat(waypoint.lng), parseFloat(waypoint.lat)]
-//   segments.push(segment);
-//   segments.push([segment[1], null])
-// });
-
-//   const lastSegment = segments.pop();
-//   lastSegment[1] = end
-//   segments.push(lastSegment)
-
-  return segments
-  }
 
 @Injectable()
 export class RoutesService {
@@ -77,12 +40,12 @@ export class RoutesService {
       return { ok: false, error: "400: Invalid coordinates provided" };
     }
 
-    for (const [lat, lng] of coordinates) {
-      const onLand = await validateLandCoordinates(lat, lng);
-      if (!onLand) {
-        return { ok: false, error: "400: One or more coordinates are not on land" };
-      }
-    }
+    // for (const [lat, lng] of coordinates) {
+    //   const onLand = await validateLandCoordinates(lat, lng);
+    //   if (!onLand) {
+    //     return { ok: false, error: "400: One or more coordinates are not on land" };
+    //   }
+    // }
 
     if (!validTransportProfiles[profile]) {
       return { ok: false, error: `400: Invalid profile ${profile}` };
@@ -104,7 +67,8 @@ export class RoutesService {
           instructions: false,
           calc_points: true,
             "alternative_route.max_paths": 2,  
-            "alternative_route.max_share_factor": 0.6
+            "alternative_route.max_share_factor": 0.6,
+          distance
         };
 
         return this.fetchRoute(requestPayload, apiKey);
@@ -112,6 +76,7 @@ export class RoutesService {
 
       const responses = await Promise.all(routesPromises);
       const validResponses = responses.filter(response => response.ok);
+
       if (validResponses.length > 0) {
         return { ok: true, data: { routes: validResponses.map(response => response.data) } };
       } else {
@@ -152,8 +117,6 @@ export class RoutesService {
     if (data?.paths?.length) {
       const parsedRoute: ParsedRoute =  parsedRoutes(data.paths[0], []);
      
-     
-     
       return { ok: true, data: parsedRoute };
     } else {
       return { ok: false, error: "No routes found in the response." };
@@ -187,5 +150,7 @@ export class RoutesService {
     //         ----> no funciona a no ser que sean dos puntos muy cercanos
     
     //b. partir las waypoints serian puntos finales e iniciales
-    //b.1 hacer que cada waypoint sea una ruta independiente      ----> ok
-    //b.2 longitud de ruta máxima y waypoints máximos             ----> 
+    //b.1 hacer que cada waypoint sea una ruta independiente                             ----> ok
+    //b.2 longitud de ruta máxima y waypoints máximos                                    ----> a determinar
+    //b.3 en caso de que no haya waypoints que no entre en el for                        ----> ok
+    //b.4 valorar si es mejor llamar a graphhopper y que falle que hacer dos peticiones  

@@ -2,7 +2,7 @@ import { europeCountriesISO } from '../assets/europeCountriesISO';
 import { mockedPOIs } from '../assets/mockedPOIs';
 import { decodePolyline, logPolyline, simplifyPolyline } from './polyline.utils';
 import { generateRoutesDetails } from './routes.details.util';
-import { GeoJsonLineString, IResponse, ParsedResponse, ParsedRoute, Path, Waypoint } from './routes.types';
+import { GenerateSegmentedRoutes, GeoJsonLineString, IResponse, ParsedResponse, ParsedRoute, Path, Waypoint } from './routes.types';
 import * as turf from '@turf/turf'
 
 export const parsedRoutes = (
@@ -98,3 +98,26 @@ const getPOIsWithinDistanceFromLine = (
   });
 }
 
+
+export const generateSegmentedRoutes = (
+{   start,
+    end,
+    waypoints} : GenerateSegmentedRoutes
+   ): [number, number][][] => {
+ const segments: [number, number][][] = [] 
+
+ if(waypoints.length === 0){
+  segments.push([start, end])
+ } else {
+  let previousPoint = start
+  
+  waypoints.forEach(waypoint => {
+    const currentPoint: [number, number] = [parseFloat(waypoint.lng), parseFloat(waypoint.lat)]
+    segments.push([previousPoint, currentPoint])
+    previousPoint = currentPoint
+  })
+  segments.push([previousPoint, end])
+ }
+
+  return segments
+  }

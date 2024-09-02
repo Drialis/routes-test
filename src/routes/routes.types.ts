@@ -79,6 +79,7 @@ export interface RoutePayload {
   algorithm?: string; 
   'alternative_route.max_paths'?: number; 
   'alternative_route.max_share_factor'?: number;
+  distance: number
 }
 
 export interface RoutesRequest {
